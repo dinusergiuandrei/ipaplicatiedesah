@@ -1,6 +1,8 @@
 #include "stdafx.h"
-#include "LTexture.h"
-
+#include <SDL.h>
+#include <SDL_image.h>
+#include <stdio.h>
+#include <string>
 
 
 LTexture::LTexture()
@@ -9,7 +11,6 @@ LTexture::LTexture()
 	mTexture = NULL;
 	mWidth = 0;
 	mHeight = 0;
-	this->mHeight;
 }
 
 LTexture::~LTexture()
@@ -86,6 +87,6 @@ void LTexture::free()
 void LTexture::render(int x, int y)
 {
 	//Set rendering space and render to screen
-	SDL_Rect renderQuad = { x, y, mWidth, mHeight };
+	SDL_Rect renderQuad = { x, y, this->mWidth, this->mHeight };
 	SDL_RenderCopy(gRenderer, mTexture, NULL, &renderQuad);
 }

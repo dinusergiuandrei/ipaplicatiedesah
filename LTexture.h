@@ -1,5 +1,9 @@
 #pragma once
-
+#include "stdafx.h"
+#include <SDL.h>
+#include <SDL_image.h>
+#include <stdio.h>
+#include <string>
 
 class LTexture
 {
@@ -27,8 +31,6 @@ public:
 		this->vect = v;
 		this->size = n;
 	}
-
-private:
 	//The actual hardware texture
 	SDL_Texture* mTexture;
 
