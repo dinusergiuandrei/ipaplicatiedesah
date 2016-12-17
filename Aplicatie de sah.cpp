@@ -21,6 +21,8 @@ using namespace std;
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
+int Table[10][10];
+
 SDL_Texture* loadTexture(string path);
 
 SDL_Window* gWindow = NULL;
@@ -29,6 +31,7 @@ SDL_Renderer* gRenderer = NULL;
 
 SDL_Rect TableViewport;
 
+void setSQPort();
 
 
 class LTexture
@@ -59,8 +62,6 @@ public:
 	//Image dimensions
 	int mWidth;
 	int mHeight;
-	int *vect;
-	int size;
 };
 
 
@@ -76,7 +77,6 @@ LTexture::LTexture()
 
 LTexture::~LTexture()
 {
-	//Deallocate memory
 	free();
 }
 
@@ -84,41 +84,14 @@ LTexture::~LTexture()
 
 bool LTexture::loadFromFile(std::string path)
 {
-	//Get rid of preexisting texture
 	free();
-
 	SDL_Texture* newTexture = NULL;
-
-	//Load image at specified path
 	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
-	SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0xFF, 0xFF, 0xFF));
-	if (loadedSurface == NULL)
-	{
-		printf("Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError());
-	}
-	else
-	{
-		//Color key image
-		SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
-
-		//Create texture from surface pixels
-		newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
-		if (newTexture == NULL)
-		{
-			printf("Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError());
-		}
-		else
-		{
-			//Get image dimensions
-			mWidth = loadedSurface->w;
-			mHeight = loadedSurface->h;
-		}
-
-		//Get rid of old loaded surface
-		SDL_FreeSurface(loadedSurface);
-	}
-
-	//Return success
+	//SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0xFF, 0xFF, 0xFF));
+	newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+	mWidth = loadedSurface->w;
+	mHeight = loadedSurface->h;
+	SDL_FreeSurface(loadedSurface);
 	mTexture = newTexture;
 	return mTexture != NULL;
 }
@@ -158,6 +131,7 @@ void LTexture::render(SDL_Rect port)
 
 LTexture TableTexture;
 LTexture PieceTexture[12];
+LTexture BackgroundTexture;
 SDL_Rect SQPort[64];
 SDL_Rect WindowPort;
 
@@ -169,14 +143,16 @@ void close();
 
 
 enum SQ {
-	A1, A2, A3, A4, A5, A6 ,A7, A8,
-	B1, B2, B3, B4, B5, B6, B7, B8,
-	C1, C2, C3, C4, C5, C6, C7, C8,
-	D1, D2, D3, D4, D5, D6, D7, D8,
-	E1, E2, E3, E4, E5, E6, E7, E8,
-	F1, F2, F3, F4, F5, F6, F7, F8,
-	G1, G2, G3, G4, G5, G6, G7, G8,
-	H1, H2, H3, H4, H5, H6, H7, H8
+
+	A8, B8, C8, D8, E8, F8, G8, H8,
+	A7, B7, C7, D7, E7, F7, G7, H7,
+	A6, B6, C6, D6, E6, F6, G6, H6,
+	A5, B5, C5, D5, E5, F5, G5, H5,
+	A4, B4, C4, D4, E4, F4, G4, H4,
+	A3, B3, C3, D3, E3, F3, G3, H3,
+	A2, B2, C2, D2, E2, F2, G2, H2,
+	A1, B1, C1, D1, E1, F1, G1, H1
+
 };
 
 enum PIECE
@@ -192,10 +168,7 @@ void setWindowPort()
 	WindowPort.x = WindowPort.y = 0;
 }
 
-void setSQPort()
-{
-	//pentru fiecare camp completez SQPort[SQ].h, .w, .x, .y
-}
+
 
 bool init()
 {
@@ -209,7 +182,7 @@ bool init()
 	
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-
+	
 	int imgFlags = IMG_INIT_PNG;
 	IMG_Init(imgFlags);
 	
@@ -221,6 +194,8 @@ bool init()
 
 void loadMedia()
 {
+	cout<<BackgroundTexture.loadFromFile("Images/background3.png")<<"\n";
+	cout << "background loaded successfully" << "\n";
 	TableTexture.loadFromFile("Images/tabla.png");
 	cout << "tabla loaded successfully" << "\n";
 	PieceTexture[pionalb].loadFromFile("Images/pionalb.png");
@@ -247,12 +222,12 @@ void loadMedia()
 	cout << "damanegru loaded successfully" << "\n";
 	PieceTexture[regenegru].loadFromFile("Images/regenegru.png");
 	cout << "regenegru loaded successfully" << "\n";
+	
 }
 
 void close()
 {
 	TableTexture.free();
-	
 	SDL_DestroyRenderer(gRenderer);
 	SDL_DestroyWindow(gWindow);
 	gWindow = NULL;
@@ -271,9 +246,21 @@ SDL_Texture* loadTexture(string path)
 	return newTexture;
 }
 
-void Show_Table()
+void Show_Background()
 {
 	SDL_RenderClear(gRenderer);
+	//SDL_RenderSetViewport(gRenderer, &WindowPort);
+	TableViewport.x = SCREEN_HEIGHT / 10;
+	TableViewport.y = SCREEN_HEIGHT / 10;
+	TableViewport.w = SCREEN_HEIGHT * 8 / 10;
+	TableViewport.h = SCREEN_HEIGHT * 8 / 10;
+	SDL_RenderSetViewport(gRenderer, &TableViewport);
+	BackgroundTexture.render(WindowPort);
+}
+
+void Show_Board()
+{
+	//SDL_RenderClear(gRenderer);
 	TableViewport.x = SCREEN_HEIGHT / 10;
 	TableViewport.y = SCREEN_HEIGHT / 10;
 	TableViewport.w = SCREEN_HEIGHT * 8 / 10;
@@ -288,16 +275,87 @@ void Show_Piece(int piece, SDL_Rect port)
 	PieceTexture[piece].render(port);
 }
 
+void setSQPort()
+{
+	int i, dif=0, l, c;
+	for (i = 0; i < 64; i++)
+	{
+		SQPort[i].h = 66+dif;
+		SQPort[i].w = 66+dif;
+		dif = 1 - dif;
+	}
+	dif = 0;
+	for (i = 0; i < 64; i++)
+	{
+		SQPort[i].x = 94 + (i%8) * (66);
+		SQPort[i].y = 94 + (i/8) * (66);
+		dif = 1 - dif;
+	}
+}
+
+void put_piece(int p, int sq)
+{
+	Table[sq / 8][sq % 8] = p;
+}
+
+int move(int sq1, int sq2)
+{
+	int captured;
+	captured = Table[sq2 / 8][sq2 % 8];
+	put_piece(Table[sq1 / 8][sq1 % 8], sq2);
+	return captured;
+}
+
+void Init_Table()
+{
+	int i;
+	for (i = A8; i <= H1; i++)
+		Table[i / 8][i % 8] = -1;
+	for(i=A7; i<=H7; i++)
+		put_piece(pionnegru, i);
+	for (i = A2; i <= H2; i++)
+		put_piece(pionalb, i);
+	put_piece(calalb, B1);
+	put_piece(calalb, G1);
+	put_piece(calnegru, B8);
+	put_piece(calnegru, G8);
+	put_piece(nebunalb, C1);
+	put_piece(nebunalb, F1);
+	put_piece(nebunnegru, C8);
+	put_piece(nebunnegru, F8);
+	put_piece(turnalb, A1);
+	put_piece(turnalb, H1);
+	put_piece(turnnegru, A8);
+	put_piece(turnnegru, H8);
+	put_piece(damaalb, D1);
+	put_piece(damanegru, D8);
+	put_piece(regealb, E1);
+	put_piece(regenegru, E8);
+}
+
+void Show_Table()
+{
+	int i;
+	for (i = A8; i <= H1; i++)
+		if (Table[i / 8][i % 8] >= 0)
+			Show_Piece(Table[i / 8][i % 8], SQPort[i]);
+}
+
 int main(int argc, char* args[])
 {
+	int i, j;
 	init();
 	loadMedia();
 	bool quit = false;
 	SDL_Event e;
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-	
-	Show_Table();
+	SDL_RenderClear(gRenderer);
+	//Show_Background();
+	Show_Board();
+	setSQPort();
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	Init_Table();
+	Show_Table();
 	while (!quit)
 		{
 				while (SDL_PollEvent(&e) != 0)
@@ -308,24 +366,9 @@ int main(int argc, char* args[])
 					}
 				}
 				
-				
-				
-				
-				/*SDL_Rect port;
-				port.y = SCREEN_HEIGHT * 8 / 10;
-				port.x = SCREEN_HEIGHT * 3 / 10;
-				port.h = SCREEN_HEIGHT/ 10;
-				port.w = SCREEN_HEIGHT / 10;
-				Show_Piece(calalb, port);
-				*/
-				SDL_Rect fillRect = { 169, 160, 50, 66 };
-				//SDL_SetRenderDrawColor(gRenderer, 0, 0xFF, 0xFF, 0xFF);
-				//SDL_RenderFillRect(gRenderer, &fillRect);
-				Show_Piece(regenegru, fillRect);
-				SDL_RenderPresent(gRenderer);
-				
 			}
-		
+	
+	
 	close();
 	
 	return 0;
@@ -334,5 +377,5 @@ int main(int argc, char* args[])
 
 // tabla incepe de la x=72p
 //prima coloana incepe de la x=94p
-//un camp e 66,5 x 66,5
+//un camp e 66 x 66
 //b7 SDL_Rect fillRect = { 169, 160, 50, 66 };
