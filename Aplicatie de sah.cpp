@@ -21,7 +21,11 @@ using namespace std;
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
-int Table[10][10];
+int Table[10][10], WhiteControl[10][10], BlackControl[10][10];
+int dl[8] = {-1, 0, 1, 0, -1, 1, 1, -1};
+int dc[8] = {0, 1, 0, -1, 1, 1, -1, -1};
+int dcl[8] = {-2, -1, 1, 2, 2, 1, -1, -2};
+int dcc[8] = {1, 2, 2, 1, -1, -2, -2, -1};
 
 SDL_Texture* loadTexture(string path);
 
@@ -33,6 +37,9 @@ SDL_Rect TableViewport;
 
 void setSQPort();
 
+void PresentTableControl();
+
+bool IsAttackedPiece(int sq);
 
 class LTexture
 {
@@ -269,8 +276,10 @@ void Show_Board()
 	TableTexture.render(TableViewport);
 }
 
-void Show_Piece(int piece, SDL_Rect port)
+void Show_Piece(int piece, int SQ)
 {
+	SDL_Rect port;
+	port = SQPort[SQ];
 	SDL_RenderSetViewport(gRenderer, &port);
 	PieceTexture[piece].render(port);
 }
@@ -303,6 +312,7 @@ int move(int sq1, int sq2)
 	int captured;
 	captured = Table[sq2 / 8][sq2 % 8];
 	put_piece(Table[sq1 / 8][sq1 % 8], sq2);
+	Table[sq1 / 8][sq1 % 8] = -1;
 	return captured;
 }
 
@@ -336,26 +346,526 @@ void Init_Table()
 void Show_Table()
 {
 	int i;
+	SDL_RenderClear(gRenderer);
+	Show_Board();
 	for (i = A8; i <= H1; i++)
 		if (Table[i / 8][i % 8] >= 0)
-			Show_Piece(Table[i / 8][i % 8], SQPort[i]);
+			Show_Piece(Table[i / 8][i % 8], i);
+}
+
+bool IsOnBoard(int sq)
+{
+	return ((sq >= 0) && (sq < 64));
+}
+
+int gitCuloare(int sq)
+{
+	if (!IsOnBoard(sq))
+		return 0;
+	int piece = Table[sq / 8][sq % 8];
+	if (piece == -1)
+		return 0;
+	if (piece <= regealb)
+		return 1;
+	if (piece > regealb)
+		return -1;
+}
+
+bool IsLegalMove(int sq1, int sq2)
+{
+	int valid = 1, culoare1=0, culoare2=-1, aux;
+	int piece = Table[sq1 / 8][sq1 % 8], piece2=Table[sq2/8][sq2%8];
+	int l1, c1, l2, c2, difl, difc, dl, dc, caux, laux;
+	if ((!IsOnBoard(sq1)) || (!IsOnBoard(sq2)))
+		return false;
+	if (piece < 0)
+		return false;
+	if (sq1 == sq2)
+		return false;
+	
+	l1 = sq1 / 8;
+	c1 = sq1 % 8;
+	l2 = sq2 / 8;
+	c2 = sq2 % 8;
+	difl = l2 - l1;
+	if (difl < 0) 
+		difl = difl*(-1);
+	difc = c2 - c1;
+	if (difc < 0)
+		difc = difc*(-1);
+	if (piece <= regealb)
+		culoare1 = 1;
+	else culoare1 = 0;
+	if(piece2!=-1)
+		if (piece2 <= regealb)
+			culoare2 = 1;
+		else culoare2 = 0;
+	else culoare2 = -1;
+	if (culoare1 == culoare2)
+		return false;
+
+	if (piece == calalb || piece == calnegru)
+	{
+		if (  (! (difc == 2 && difl == 1) ) && ( !(difc == 1 && difl == 2)  )   )
+		{
+			valid = 0;
+			cout << "mutare invalida cal"<<difc<<" "<<difl<<"\n";
+		}
+	}
+	if (piece == nebunalb || piece == nebunnegru)
+	{
+		if (difc != difl)
+			return false;
+		if (difc == 0 || difl == 0)
+			return false;
+		dl = (l2 - l1) / difl;
+		dc = (c2 - c1) / difc;
+		laux = l1 + dl;
+		caux = c1 + dc;
+		while (laux != l2)
+		{
+			if (Table[laux][caux] != -1)
+				return false;
+			laux += dl;
+			caux += dc;
+		}
+	}
+
+	if (piece == turnalb || piece == turnnegru)
+	{
+		if (l2 > l1)
+			dl = 1;
+		else 
+			if (l2 < l1)
+				dl = -1;
+			else dl = 0;
+		if (c2 > c1)
+			dc = 1;
+		else
+			if (c2 < c1)
+				dc = -1;
+			else dc = 0;
+		laux = l1 + dl;
+		caux = c1 + dc;
+		while (laux != l2&&caux!=c2)
+		{
+			if (Table[laux][caux] != -1)
+				return false;
+			laux += dl;
+			caux += dc;
+		}
+	}
+	if (piece == damaalb || piece == damanegru)
+	{
+		if (!(difl == 0 || difc == 0 || difl == difc))
+			return false;
+		if (difl == 0)
+		{
+			caux = c1;
+			laux = l1;
+			dc = (c2 - c1) / difc;
+			while (caux != c2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				caux += dc;
+			}
+		}
+		if (difc == 0)
+		{
+			caux = c1;
+			laux = l1;
+			dl = (c2 - c1) / difl;
+			while (laux != l2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				laux += dl;
+			}
+		}
+		if (difc == difl)
+		{
+			dc = (c2 - c1) / difc;
+			dl = (c2 - c1) / difl;
+			laux = l1 + dl;
+			caux = c1 + dc;
+			while (laux != l2&&caux != c2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				laux += dl;
+				caux += dc;
+			}
+		}
+	}
+	
+	if (piece == regealb || piece==regenegru)
+	{
+		if (!(difl == 0 || difc == 0 || difl == difc))
+			return false;
+		if (difl == 0)
+		{
+			caux = c1;
+			laux = l1;
+			dc = (c2 - c1) / difc;
+			while (caux != c2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				caux += dc;
+			}
+		}
+		if (difc == 0)
+		{
+			caux = c1;
+			laux = l1;
+			dl = (c2 - c1) / difl;
+			while (laux != l2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				laux += dl;
+			}
+		}
+		if (difc == difl)
+		{
+			dc = (c2 - c1) / difc;
+			dl = (c2 - c1) / difl;
+			laux = l1 + dl;
+			caux = c1 + dc;
+			while (laux != l2&&caux != c2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				laux += dl;
+				caux += dc;
+			}
+		}
+	}
+
+	/*int auxp = Table[l2][c2], BlackKingLine, BlackKingColumn, WhiteKingLine, WhiteKingColumn, i, j;
+	for (i = 0; i < 8; i++)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			if (Table[i][j] == regealb)
+			{
+				WhiteKingLine = i;
+				WhiteKingColumn = j;
+			}
+			if (Table[i][j] == regenegru)
+			{
+				BlackKingColumn = j;
+				BlackKingLine = i;
+			}
+		}
+	}
+	
+	auxp=Table[sq2/8][sq2%8];
+	Table[sq2 / 8][sq2 % 8] = piece;
+	Table[sq1 / 8][sq1 % 8] = -1;
+	PresentTableControl();
+	if (piece<=regealb)
+		if (IsAttackedPiece(WhiteKingLine * 8 + WhiteKingColumn % 8))
+			valid = 0;
+	if (piece>regealb)
+		if (IsAttackedPiece(BlackKingLine * 8 + BlackKingColumn % 8))
+			valid = 0;
+	Table[sq2 / 8][sq2 % 8] = auxp;
+	Table[sq1 / 8][sq1 % 8] = piece;
+	
+	if(!valid)
+		PresentTableControl();
+	*/
+	return valid;
+}
+
+
+
+void PresentTableControl()
+{
+	int i, j, col, piece, vl, vc, dir;
+	for (i = 0; i < 8; i++)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			WhiteControl[i][j] = 0;
+			BlackControl[i][j] = 0;
+		}
+	}
+	for (i = 0; i < 8; i++)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			piece = Table[i][j];
+			if (piece != -1)
+			{
+				if (piece == pionalb)
+				{
+					vl = i - 1;
+					vc = j - 1;
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							WhiteControl[vl][vc]++;
+					vc = j + 1;
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							WhiteControl[vl][vc]++;
+				}
+				if (piece == pionnegru)
+				{
+					vl = i + 1;
+					vc = j - 1;
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							BlackControl[vl][vc]++;
+					vc = j + 1;
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							BlackControl[vl][vc]++;
+				}
+				if (piece == calalb)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dcl[dir];
+						vc = j + dcc[dir];
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								WhiteControl[vl][vc]++;
+					}
+				}
+				if (piece == calnegru)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dcl[dir];
+						vc = j + dcc[dir];
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								BlackControl[vl][vc]++;
+					}
+				}
+				if (piece == nebunalb)
+				{
+					for (dir = 4; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								WhiteControl[vl][vc]++;
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+
+				if (piece == nebunnegru)
+				{
+					for (dir = 4; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								BlackControl[vl][vc]++;
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+				if (piece == turnalb)
+				{
+					for (dir = 0; dir < 4; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								WhiteControl[vl][vc]++;
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+				if (piece == turnnegru)
+				{
+					for (dir = 0; dir < 4; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								BlackControl[vl][vc]++;
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+				if (piece == damaalb)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								WhiteControl[vl][vc]++;
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+				if (piece == damanegru)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								BlackControl[vl][vc]++;
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+				if (piece == regealb)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								WhiteControl[vl][vc]++;
+						}
+					}
+				}
+				if (piece == regenegru)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
+								BlackControl[vl][vc]++;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+bool IsAttackedPiece(int sq)
+{
+	int piece = Table[sq / 8][sq % 8];
+	if (piece == -1)
+		return false;
+	if (piece <= regealb)
+		if (BlackControl[sq / 8][sq % 8] != 0)
+			return true;
+	if (piece > regealb)
+		if (WhiteControl[sq / 8][sq % 8] != 0)
+			return true;
+	return false;
+}
+
+bool ismate(int tomove)
+{
+	int king, i, j, kingl, kingc, attacked=0, dir, vl, vc;
+	if (tomove == 0)
+		king = regealb;
+	else king = regenegru;
+	for(i=0; i<8; i++)
+		for(j=0; j<8; j++)
+			if (Table[i][j] == king)
+			{
+				kingl = i;
+				kingc = j;
+			}
+	attacked = IsAttackedPiece(kingl * 8 + kingc % 8);
+	if (!attacked)
+		return false;
+	for (dir = 0; dir < 8; dir++)
+	{
+		vl = kingl + dl[dir];
+		vc = kingc + dc[dir];
+		if (IsLegalMove(kingl * 8 + kingc % 8, vl * 8 + vc % 8) == 1)
+			return false;
+	}
+	return true;
+
+}
+
+int PvsP()
+{
+	int tomove, mate, quit, sq1, sq2;
+	SDL_Event e;
+	tomove = 0;
+	mate = 0;
+	quit = 0;
+	while (!quit&&!mate)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			//input
+			
+			cin >> sq1 >> sq2;
+
+
+			if (sq1 != -1 && IsLegalMove(sq1, sq2))
+			{
+				move(sq1, sq2);
+				mate = ismate(tomove);
+				PresentTableControl();
+				tomove = -1 - tomove;
+				Show_Table();
+			}
+			if (mate)
+				break;
+		}
+
+	}
+
+	return 1 - tomove;   
+	//returneaza castigatorul    
+	//   alb=0
+	//  negru=-1;
+
 }
 
 int main(int argc, char* args[])
 {
-	int i, j;
+	cout << "test i\n";
+	char sir[5];
+	int i, j, sq1, sq2, l1, c1, l2, c2, tomove=1, piece;
 	init();
+	cout << "test init\n";
 	loadMedia();
+	cout << "test load media\n";
 	bool quit = false;
 	SDL_Event e;
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(gRenderer);
-	//Show_Background();
+	Show_Background();
 	Show_Board();
 	setSQPort();
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
 	Init_Table();
 	Show_Table();
+	i = 0;
 	while (!quit)
 		{
 				while (SDL_PollEvent(&e) != 0)
@@ -364,10 +874,38 @@ int main(int argc, char* args[])
 					{
 						quit = true;
 					}
+					cin >> sir;
+					c1 = sir[0] - 'a';
+					l1 = sir[1] - '0';
+					l1 = 8 - l1;
+					sq1 = l1 * 8 + c1 % 8;
+
+					cin >> sir;
+					c2 = sir[0] - 'a';
+					l2 = sir[1] - '0';
+					l2 = 8 - l2;
+					sq2 = l2 * 8 + c2 % 8;
+					//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
+					piece = Table[l1][c1];
+					if(tomove==1 && (piece>=pionalb&&piece<=regealb))
+						if (IsLegalMove(sq1, sq2))
+					{
+						//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
+						move(sq1, sq2);
+						Show_Table();
+						tomove = 1 - tomove;
+					}
+					if(tomove==0 && (piece >= pionnegru&&piece <= regenegru))
+						if (IsLegalMove(sq1, sq2))
+						{
+							//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
+							move(sq1, sq2);
+							Show_Table();
+							tomove = 1 - tomove;
+						}
 				}
 				
 			}
-	
 	
 	close();
 	
