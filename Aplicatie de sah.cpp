@@ -39,7 +39,9 @@ void setSQPort();
 
 void PresentTableControl();
 
-bool IsAttackedPiece(int sq);
+int IsAttackedByWhite(int sq);
+
+int IsAttackedByBlack(int sq);
 
 class LTexture
 {
@@ -353,30 +355,12 @@ void Show_Table()
 			Show_Piece(Table[i / 8][i % 8], i);
 }
 
-bool IsOnBoard(int sq)
-{
-	return ((sq >= 0) && (sq < 64));
-}
-
-int gitCuloare(int sq)
-{
-	if (!IsOnBoard(sq))
-		return 0;
-	int piece = Table[sq / 8][sq % 8];
-	if (piece == -1)
-		return 0;
-	if (piece <= regealb)
-		return 1;
-	if (piece > regealb)
-		return -1;
-}
-
-bool IsLegalMove(int sq1, int sq2)
+bool IsValidMove(int sq1, int sq2)
 {
 	int valid = 1, culoare1=0, culoare2=-1, aux;
 	int piece = Table[sq1 / 8][sq1 % 8], piece2=Table[sq2/8][sq2%8];
 	int l1, c1, l2, c2, difl, difc, dl, dc, caux, laux;
-	if ((!IsOnBoard(sq1)) || (!IsOnBoard(sq2)))
+	if(!(sq1>=0&&sq1<64&&sq2>=0&&sq2<64))
 		return false;
 	if (piece < 0)
 		return false;
@@ -543,7 +527,14 @@ bool IsLegalMove(int sq1, int sq2)
 		}
 	}
 
-	/*int auxp = Table[l2][c2], BlackKingLine, BlackKingColumn, WhiteKingLine, WhiteKingColumn, i, j;
+	return valid;
+}
+
+bool IsLegalMove(int sq1, int sq2)
+{
+	if (!IsValidMove(sq1, sq2))
+		return false;
+	int BlackKingLine, BlackKingColumn, WhiteKingLine, WhiteKingColumn, i, j, piece=Table[sq1/8][sq1%8] ;
 	for (i = 0; i < 8; i++)
 	{
 		for (j = 0; j < 8; j++)
@@ -560,27 +551,227 @@ bool IsLegalMove(int sq1, int sq2)
 			}
 		}
 	}
-	
-	auxp=Table[sq2/8][sq2%8];
-	Table[sq2 / 8][sq2 % 8] = piece;
-	Table[sq1 / 8][sq1 % 8] = -1;
-	PresentTableControl();
-	if (piece<=regealb)
-		if (IsAttackedPiece(WhiteKingLine * 8 + WhiteKingColumn % 8))
-			valid = 0;
-	if (piece>regealb)
-		if (IsAttackedPiece(BlackKingLine * 8 + BlackKingColumn % 8))
-			valid = 0;
-	Table[sq2 / 8][sq2 % 8] = auxp;
-	Table[sq1 / 8][sq1 % 8] = piece;
-	
-	if(!valid)
-		PresentTableControl();
-	*/
-	return valid;
+
+	if (piece <= regealb)    // se acceseaza ba asta ba attackedby
+		if (IsAttackedByBlack(WhiteKingLine * 8 + WhiteKingColumn % 8) > 0)
+			return false;
+	if (piece > regealb)
+		if (IsAttackedByWhite(BlackKingLine * 8 + BlackKingColumn % 8) > 0)
+			return false;
+	return true;
 }
 
+int IsAttackedByWhite(int sq)
+{
+	int piece, i, j, attacked = 0, vl, vc, dir;
 
+	for (i = 0; i<8; i++)
+		for (j = 0; j < 8; j++)
+		{
+			piece = Table[i][j];
+			if (piece == pionalb)
+			{
+				vl = i - 1;
+				vc = j - 1;
+				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					if (vl * 8 + vc % 8 == sq)
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						attacked++;
+				vc = j + 1;
+				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					if (vl * 8 + vc % 8 == sq)
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						attacked++;
+			}
+			if (piece == calalb)
+			{
+				for (dir = 0; dir < 8; dir++)
+				{
+					vl = i + dcl[dir];
+					vc = j + dcc[dir];
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+				}
+			}
+
+			if (piece == nebunalb)
+			{
+				for (dir = 4; dir < 8; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+						vl += dl[dir];
+						vc += dc[dir];
+					}
+				}
+			}
+
+			if (piece == turnalb)
+			{
+				for (dir = 0; dir < 4; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+						vl += dl[dir];
+						vc += dc[dir];
+					}
+				}
+			}
+
+			if (piece == damaalb)
+			{
+				for (dir = 0; dir < 8; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+						vl += dl[dir];
+						vc += dc[dir];
+					}
+				}
+			}
+
+			if (piece == regealb)
+			{
+				for (dir = 0; dir < 8; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+					}
+				}
+			}
+
+		}
+
+return attacked;
+}
+
+int IsAttackedByBlack(int sq)
+{
+	int piece, i, j, attacked = 0, dir, vl ,vc;
+
+	for (i = 0; i<8; i++)
+		for (j = 0; j < 8; j++)
+		{
+			piece = Table[i][j];
+			if (piece == pionnegru)
+			{
+				vl = i + 1;
+				vc = j - 1;
+				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					if (vl * 8 + vc % 8 == sq)
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						attacked++;
+				vc = j + 1;
+				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					if (vl * 8 + vc % 8 == sq)
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						attacked++;
+			}
+
+			if (piece == calnegru)
+			{
+				for (dir = 0; dir < 8; dir++)
+				{
+					vl = i + dcl[dir];
+					vc = j + dcc[dir];
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+				}
+			}
+
+
+			if (piece == nebunnegru)
+			{
+				for (dir = 4; dir < 8; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+						vl += dl[dir];
+						vc += dc[dir];
+					}
+				}
+			}
+
+			if (piece == turnnegru)
+			{
+				for (dir = 0; dir < 4; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+						vl += dl[dir];
+						vc += dc[dir];
+					}
+				}
+			}
+
+			if (piece == damanegru)
+			{
+				for (dir = 0; dir < 8; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+						vl += dl[dir];
+						vc += dc[dir];
+					}
+				}
+			}
+			if (piece == regenegru)
+			{
+				for (dir = 0; dir < 8; dir++)
+				{
+					vl = i + dl[dir];
+					vc = j + dc[dir];
+					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					{
+						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+							if (vl * 8 + vc % 8 == sq)
+								attacked++;
+					}
+				}
+			}
+		}
+
+return attacked;
+}
 
 void PresentTableControl()
 {
@@ -597,186 +788,13 @@ void PresentTableControl()
 	{
 		for (j = 0; j < 8; j++)
 		{
-			piece = Table[i][j];
-			if (piece != -1)
-			{
-				if (piece == pionalb)
-				{
-					vl = i - 1;
-					vc = j - 1;
-					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							WhiteControl[vl][vc]++;
-					vc = j + 1;
-					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							WhiteControl[vl][vc]++;
-				}
-				if (piece == pionnegru)
-				{
-					vl = i + 1;
-					vc = j - 1;
-					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							BlackControl[vl][vc]++;
-					vc = j + 1;
-					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							BlackControl[vl][vc]++;
-				}
-				if (piece == calalb)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dcl[dir];
-						vc = j + dcc[dir];
-						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								WhiteControl[vl][vc]++;
-					}
-				}
-				if (piece == calnegru)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dcl[dir];
-						vc = j + dcc[dir];
-						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								BlackControl[vl][vc]++;
-					}
-				}
-				if (piece == nebunalb)
-				{
-					for (dir = 4; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								WhiteControl[vl][vc]++;
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-
-				if (piece == nebunnegru)
-				{
-					for (dir = 4; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								BlackControl[vl][vc]++;
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-				if (piece == turnalb)
-				{
-					for (dir = 0; dir < 4; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								WhiteControl[vl][vc]++;
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-				if (piece == turnnegru)
-				{
-					for (dir = 0; dir < 4; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								BlackControl[vl][vc]++;
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-				if (piece == damaalb)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								WhiteControl[vl][vc]++;
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-				if (piece == damanegru)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								BlackControl[vl][vc]++;
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-				if (piece == regealb)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								WhiteControl[vl][vc]++;
-						}
-					}
-				}
-				if (piece == regenegru)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-								BlackControl[vl][vc]++;
-						}
-					}
-				}
-			}
+			WhiteControl[i][j] = IsAttackedByWhite(i * 8 + i % 8);  
+			BlackControl[i][j] = IsAttackedByBlack(i * 8 + i % 8);	
 		}
 	}
 }
 
-bool IsAttackedPiece(int sq)
-{
-	int piece = Table[sq / 8][sq % 8];
-	if (piece == -1)
-		return false;
-	if (piece <= regealb)
-		if (BlackControl[sq / 8][sq % 8] != 0)
-			return true;
-	if (piece > regealb)
-		if (WhiteControl[sq / 8][sq % 8] != 0)
-			return true;
-	return false;
-}
+
 
 bool ismate(int tomove)
 {
@@ -791,7 +809,12 @@ bool ismate(int tomove)
 				kingl = i;
 				kingc = j;
 			}
-	attacked = IsAttackedPiece(kingl * 8 + kingc % 8);
+	if (king == regealb)
+		if (IsAttackedByBlack(kingl * 8 + kingc % 8) > 0)
+			attacked = 1;
+	if(king==regenegru)
+		if (IsAttackedByWhite(kingl * 8 + kingc % 8) > 0)
+			attacked = 1;
 	if (!attacked)
 		return false;
 	for (dir = 0; dir < 8; dir++)
@@ -888,7 +911,7 @@ int main(int argc, char* args[])
 					//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
 					piece = Table[l1][c1];
 					if(tomove==1 && (piece>=pionalb&&piece<=regealb))
-						if (IsLegalMove(sq1, sq2))
+						if (IsValidMove(sq1, sq2))
 					{
 						//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
 						move(sq1, sq2);
@@ -896,7 +919,7 @@ int main(int argc, char* args[])
 						tomove = 1 - tomove;
 					}
 					if(tomove==0 && (piece >= pionnegru&&piece <= regenegru))
-						if (IsLegalMove(sq1, sq2))
+						if (IsLegalMove(sq1, sq2))  // nu verifica daca intra in sah
 						{
 							//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
 							move(sq1, sq2);
