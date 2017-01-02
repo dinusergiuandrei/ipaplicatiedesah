@@ -141,6 +141,11 @@ void LTexture::render(SDL_Rect port)
 LTexture TableTexture;
 LTexture PieceTexture[12];
 LTexture BackgroundTexture;
+LTexture Main_Menu_Background;
+LTexture Player_1_Image;
+LTexture Player_2_Image;
+LTexture Computer_Image;
+LTexture Back_Image;
 SDL_Rect SQPort[64];
 SDL_Rect WindowPort;
 
@@ -168,11 +173,6 @@ enum PIECE
 {
 	pionalb, calalb, nebunalb, turnalb, damaalb, regealb,
 	pionnegru, calnegru, nebunnegru, turnnegru, damanegru, regenegru
-};
-
-enum MENU
-{
-	Main_Menu, vsPlayer, vsComputer, Analysis
 };
 
 void setWindowPort()
@@ -208,7 +208,12 @@ bool init()
 
 void loadMedia()
 {
-	cout<<BackgroundTexture.loadFromFile("Images/background3.png")<<"\n";
+	Back_Image.loadFromFile("Images/back.png");
+	Main_Menu_Background.loadFromFile("Images/mainmenu.png");
+	Player_1_Image.loadFromFile("Images/player1.png");
+	Player_1_Image.loadFromFile("Images/player1.png");
+	Computer_Image.loadFromFile("Images/computer.png");
+	cout<<BackgroundTexture.loadFromFile("Images/bg_water.png")<<"\n";
 	cout << "background loaded successfully" << "\n";
 	TableTexture.loadFromFile("Images/tabla.png");
 	cout << "tabla loaded successfully" << "\n";
@@ -317,6 +322,30 @@ void put_piece(int p, int sq)
 int move(int sq1, int sq2)
 {
 	int captured;
+	if(Table[sq1/8][sq1%8]==regealb)
+		if (sq2 % 8 - sq1 % 8 == 2)
+		{
+			Table[7][7] = -1;
+			Table[7][5] = turnalb;
+		}
+		else
+			if (sq1 % 8 - sq2 % 8 == 3)
+			{
+				Table[7][0] = -1;
+				Table[7][3] = turnalb;
+			}
+	if (Table[sq1 / 8][sq1 % 8] == regenegru)
+		if (sq2 % 8 - sq1 % 8 == 2)
+		{
+			Table[0][7] = -1;
+			Table[0][5] = turnnegru;
+		}
+		else
+			if (sq1 % 8 - sq2 % 8 == 3)
+			{
+				Table[0][0] = -1;
+				Table[0][3] = turnnegru;
+			}
 	captured = Table[sq2 / 8][sq2 % 8];
 	put_piece(Table[sq1 / 8][sq1 % 8], sq2);
 	Table[sq1 / 8][sq1 % 8] = -1;
@@ -472,9 +501,9 @@ bool IsValidMove(int sq1, int sq2)
 		}
 		if (difl == 1 && difc == 1)
 		{
-			if (Table[l2][c2] == -1 && Table[l2 - 1][c2] != pionnegru)
+			if (Table[l2][c2] == -1 && Table[l2 - 1][c2] != pionalb)
 				return false;
-			return false;
+			return true;
 		}
 	}
 
@@ -506,27 +535,44 @@ bool IsValidMove(int sq1, int sq2)
 
 	if (piece == turnalb || piece == turnnegru)
 	{
-		if (l2 > l1)
-			dl = 1;
-		else 
-			if (l2 < l1)
-				dl = -1;
-			else dl = 0;
-		if (c2 > c1)
-			dc = 1;
-		else
-			if (c2 < c1)
-				dc = -1;
-			else dc = 0;
-		laux = l1 + dl;
-		caux = c1 + dc;
-		while (laux != l2&&caux!=c2)
+		if (!(difl == 0 || difc == 0 || difl == difc))
+			return false;
+
+		if (difl == 0)
 		{
-			if (Table[laux][caux] != -1)
-				return false;
-			laux += dl;
-			caux += dc;
+
+			caux = c1;
+			laux = l1;
+			dc = (c2 - c1) / difc;
+			caux = c1 + dc;
+			while (caux != c2)
+			{
+				if (Table[laux][caux] != -1)
+					return false;
+				caux += dc;
+			}
+
+			return true;
 		}
+		if (difc == 0)
+		{
+			caux = c1;
+			laux = l1;
+			dl = (l2 - l1) / difl;
+			laux = l1 + dl;
+			while (laux != l2)
+			{
+				if (Table[laux][caux] != -1)
+				{
+					return false;
+				}
+				laux += dl;
+			}
+			return true;
+		}
+		if (difc == difl)
+			return false;
+		return true;
 	}
 	if (piece == damaalb || piece == damanegru)   // problema
 	{
@@ -535,7 +581,7 @@ bool IsValidMove(int sq1, int sq2)
 
 		if (difl == 0)
 		{
-			cout << 2;
+			
 			caux = c1;
 			laux = l1;
 			dc = (c2 - c1) / difc;
@@ -588,6 +634,57 @@ bool IsValidMove(int sq1, int sq2)
 	{
 		if (!(difl == 0 || difc == 0 || difl == difc))
 			return false;
+		if (difc == 2||difc==3)
+		{
+			if (difl > 0)
+				return false;
+			if (piece == regealb)
+			{
+				if (sq1 / 8 != 7 && sq1 % 8 != 4)
+					return false;
+				if (sq2 != 7 * 8 + 6 && sq2 != 7 * 8 + 2)
+					return false;
+				if (sq2 == 7 * 8 + 6)
+				{
+					if (Table[7][7] != turnalb)
+						return false;
+					if (Table[7][5] != -1 || Table[7][6] != -1)
+						return false;
+					return true;
+				}
+				if (sq2 == 7 * 8 + 2)
+				{
+					if (Table[7][0] != turnalb)
+						return false;
+					if (Table[7][2] != -1 || Table[7][3] != -1 || Table[7][4] != -1)
+						return false;
+					return true;
+				}
+			}
+			if (piece == regenegru)
+			{
+				if (sq1 / 8 != 0 && sq1 % 8 != 4)
+					return false;
+				if (sq2 != 0 * 8 + 6 && sq2 != 0 * 8 + 2)
+					return false;
+				if (sq2 == 6)
+				{
+					if (Table[0][7] != turnnegru)
+						return false;
+					if (Table[0][5] != -1 || Table[0][6] != -1)
+						return false;
+					return true;
+				}
+				if (sq2 == 2)
+				{
+					if (Table[0][0] != turnnegru)
+						return false;
+					if (Table[0][1] != -1 || Table[0][2] != -1 || Table[0][3] != -1)
+						return false;
+					return true;
+				}
+			}
+		}
 		if (difl == 0)
 		{
 			caux = c1;
@@ -717,7 +814,7 @@ int IsAttackedByWhite(int sq)
 				{
 					vl = i + dl[dir];
 					vc = j + dc[dir];
-					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8 )
 					{
 						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
@@ -943,14 +1040,31 @@ bool ismate(int tomove)
 
 }
 
-int PvsP()
+void RenderToMouse(int p)
 {
-	int tomove, mate, quit, sq1, sq2;
+	SDL_Rect mouseport;
+	int x, y;
+	SDL_GetMouseState(&x, &y);
+	mouseport.x = x;
+	mouseport.y = y;
+	mouseport.h = SQPort[0].h;
+	mouseport.w = SQPort[0].w;
+	if(p<regenegru)
+	PieceTexture[p].render(mouseport);
+}
+
+void vsPlayer()
+{
+	SDL_RenderClear(gRenderer);
+	Show_Background();
+	Show_Board();
+	Init_Table();
+	Show_Table();
+	char sir[5];
+	int i, j, sq1=-1, sq2=-1, l1, c1, l2, c2, tomove = 1, piece;
+	bool quit = false;
 	SDL_Event e;
-	tomove = 0;
-	mate = 0;
-	quit = 0;
-	while (!quit&&!mate)
+	while (!quit)
 	{
 		while (SDL_PollEvent(&e) != 0)
 		{
@@ -958,106 +1072,228 @@ int PvsP()
 			{
 				quit = true;
 			}
-			//input
-			
-			cin >> sq1 >> sq2;
-
-
-			if (sq1 != -1 && IsLegalMove(sq1, sq2))
+			/*cout << "\nStarting SQ : ";
+			cin >> sir;
+			c1 = sir[0] - 'a';
+			l1 = sir[1] - '0';
+			l1 = 8 - l1;
+			sq1 = l1 * 8 + c1 % 8;
+			cout << "\nFinal SQ : ";
+			cin >> sir;
+			c2 = sir[0] - 'a';
+			l2 = sir[1] - '0';
+			l2 = 8 - l2;
+			sq2 = l2 * 8 + c2 % 8;
+			*/
+			if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
-				move(sq1, sq2);
-				mate = ismate(tomove);
-				PresentTableControl();
-				tomove = -1 - tomove;
-				Show_Table();
+				sq1 = -1;
+				sq2 = -1;
+				int x, y;
+				SDL_GetMouseState(&x, &y);
+				int inside;
+				if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+					inside = 1;
+				else inside = 0;
+				if(inside)
+					for (i = 0; i < 64; i++)
+						if(x>=SQPort[i].x&&x<=SQPort[i].x+SQPort[i].w&&y>=SQPort[i].y&&y<=SQPort[i].y+SQPort[i].h)
+					{
+							sq1 = i;
+							if (Table[sq1 / 8][sq1 % 8] != -1)
+							{
+								piece = Table[sq1 / 8][sq1 % 8];
+								//Table[sq1 / 8][sq1 % 8] = -1;
+								Show_Table();
+								//while (e.type != SDL_MOUSEBUTTONUP);
+								SDL_PollEvent(&e);
+								while( e.type != SDL_MOUSEBUTTONUP)
+								{
+									//render piece to mouse
+									//RenderToMouse(piece);
+									cout << 1;
+									SDL_PollEvent(&e);
+
+								}
+								SDL_GetMouseState(&x, &y);
+								if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+									inside = 1;
+								else inside = 0;
+								if(inside)
+									for (j = 0; j < 64; j++)
+									{
+										if (x >= SQPort[j].x&&x <= SQPort[j].x + SQPort[j].w&&y >= SQPort[j].y&&y <= SQPort[j].y + SQPort[j].h)
+										{
+											sq2 = j;
+											//
+											Table[sq1 / 8][sq1 % 8] = piece;
+											if (tomove == 1)
+												if (piece >= pionalb&&piece <= regealb && IsLegalMove(sq1, sq2))
+												{
+													Table[sq1 / 8][sq1 % 8] = piece;
+													move(sq1, sq2);
+													Show_Table();
+													tomove = 1 - tomove;
+												}
+												else cout << "\nMutare invalida\n";
+
+											else
+												if (tomove == 0)
+													if (IsLegalMove(sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+													{
+														Table[sq1 / 8][sq1 % 8] = piece;
+														move(sq1, sq2);
+														Show_Table();
+														tomove = 1 - tomove;
+													}
+													else cout << "\nMutare invalida\n";
+
+
+													//
+											}
+										}
+							}
+					}
+				
 			}
-			if (mate)
-				break;
+
 		}
 
 	}
-
-	return 1 - tomove;   
-	//returneaza castigatorul    
-	//   alb=0
-	//  negru=-1;
-
 }
 
-
-void MainMenu()
+void Show_Main_Menu()
 {
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	Main_Menu_Background.render(WindowPort);
 	
 }
 
-int main(int argc, char* args[])
+void vsComputer()
 {
-	char sir[5];
-	int i, j, sq1, sq2, l1, c1, l2, c2, tomove=1, piece;
-	init();
-	loadMedia();
-	bool quit = false;
-	SDL_Event e;
-	setSQPort();
-	setWindowPort();
-	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
-	
-	SDL_RenderSetViewport(gRenderer, &WindowPort);
 	Init_Table();
 	Show_Table();
+	char sir[5];
+	int i, j, sq1, sq2, l1, c1, l2, c2, tomove = 1, piece;
+	bool quit = false;
+	SDL_Event e;
 	i = 0;
 	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
 		{
-				while (SDL_PollEvent(&e) != 0)
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			cout << "\nStarting SQ : ";
+			cin >> sir;
+			c1 = sir[0] - 'a';
+			l1 = sir[1] - '0';
+			l1 = 8 - l1;
+			sq1 = l1 * 8 + c1 % 8;
+			cout << "\nFinal SQ : ";
+			cin >> sir;
+			c2 = sir[0] - 'a';
+			l2 = sir[1] - '0';
+			l2 = 8 - l2;
+			sq2 = l2 * 8 + c2 % 8;
+
+			piece = Table[l1][c1];
+			if (tomove == 1)
+				if (piece >= pionalb&&piece <= regealb && IsLegalMove(sq1, sq2))
 				{
-					Show_Background();
+
+					move(sq1, sq2);
 					Show_Table();
-					if (e.type == SDL_QUIT)
+					tomove = 1 - tomove;
+				}
+				else cout << "\nMutare invalida\n";
+
+			else
+				if (tomove == 0)
+					if (IsLegalMove(sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
 					{
-						quit = true;
-					}
-					cout << "\nStarting SQ : ";
-					cin >> sir;
-					c1 = sir[0] - 'a';
-					l1 = sir[1] - '0';
-					l1 = 8 - l1;
-					sq1 = l1 * 8 + c1 % 8;
-					cout << "\nFinal SQ : ";
-					cin >> sir;
-					c2 = sir[0] - 'a';
-					l2 = sir[1] - '0';
-					l2 = 8 - l2;
-					sq2 = l2 * 8 + c2 % 8;
-					//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
-					piece = Table[l1][c1];
-					if(tomove==1)
-						if (piece >= pionalb&&piece <= regealb && IsLegalMove(sq1, sq2))
-					{
-						//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
 						move(sq1, sq2);
 						Show_Table();
 						tomove = 1 - tomove;
 					}
-						else cout << "\nMutare invalida\n";
-	
-					else
-						if(tomove==0)
-							if (IsLegalMove(sq1, sq2)&&(piece >= pionnegru&&piece <= regenegru))
-							{
-								move(sq1, sq2);
-								Show_Table();
-								tomove = 1 - tomove;
-							}
-							else cout << "\nMutare invalida\n";
+					else cout << "\nMutare invalida\n";
 
-					
-				}
-				
-			}
+
+		}
+
+	}
+}
+
+void MainMenu()
+{
+	SDL_Event e;
+	Show_Main_Menu();
 	
+	int option=-1;
+	bool quit = false;
+	SDL_Rect zona1, zona2, zona3;
+	
+	zona1.x = 380;
+	zona1.y = 254;
+	zona1.h = 89;
+	zona1.w = 306;
+
+	zona2.x = 380;
+	zona2.y = 377;
+	zona2.h = 89;
+	zona2.w = 306;
+
+	zona3.x = 380;
+	zona3.y = 501;
+	zona3.h = 89;
+	zona3.w = 306;
+
+	while ((!quit)&&(option==-1))
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			
+			if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
+			{
+				int x, y;
+				SDL_GetMouseState(&x, &y);
+				
+				if ((x >= zona3.x&&x <= zona3.x + zona3.w) && (y >= zona3.y&&y <= zona3.y + zona3.h))
+					quit = true;
+				if ((x >= zona1.x&&x <= zona1.x + zona1.w) && (y >= zona1.y&&y <= zona1.y + zona1.h))
+					option = 1;
+				if ((x >= zona2.x&&x <= zona2.x + zona2.w) && (y >= zona2.y&&y <= zona2.y + zona2.h))
+					option = 2;
+			}
+		}
+	}
+	if (option == 1)
+		vsPlayer();
+	if (option == 2)
+		vsComputer();
+
+}
+
+int main(int argc, char* args[])
+{
+	init();
+	setSQPort();
+	setWindowPort();
+	loadMedia();
+	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	SDL_RenderClear(gRenderer);
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	
+	MainMenu();
 	close();
 	
 	return 0;
