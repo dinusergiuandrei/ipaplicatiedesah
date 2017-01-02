@@ -170,6 +170,11 @@ enum PIECE
 	pionnegru, calnegru, nebunnegru, turnnegru, damanegru, regenegru
 };
 
+enum MENU
+{
+	Main_Menu, vsPlayer, vsComputer, Analysis
+};
+
 void setWindowPort()
 {
 	WindowPort.h = SCREEN_HEIGHT;
@@ -257,13 +262,13 @@ SDL_Texture* loadTexture(string path)
 
 void Show_Background()
 {
-	SDL_RenderClear(gRenderer);
+	//SDL_RenderClear(gRenderer);
 	//SDL_RenderSetViewport(gRenderer, &WindowPort);
 	TableViewport.x = SCREEN_HEIGHT / 10;
 	TableViewport.y = SCREEN_HEIGHT / 10;
 	TableViewport.w = SCREEN_HEIGHT * 8 / 10;
 	TableViewport.h = SCREEN_HEIGHT * 8 / 10;
-	SDL_RenderSetViewport(gRenderer, &TableViewport);
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
 	BackgroundTexture.render(WindowPort);
 }
 
@@ -348,7 +353,7 @@ void Init_Table()
 void Show_Table()
 {
 	int i;
-	SDL_RenderClear(gRenderer);
+	//SDL_RenderClear(gRenderer);
 	Show_Board();
 	for (i = A8; i <= H1; i++)
 		if (Table[i / 8][i % 8] >= 0)
@@ -371,6 +376,8 @@ bool IsValidMove(int sq1, int sq2)
 	c1 = sq1 % 8;
 	l2 = sq2 / 8;
 	c2 = sq2 % 8;
+
+
 	difl = l2 - l1;
 	if (difl < 0) 
 		difl = difl*(-1);
@@ -388,12 +395,94 @@ bool IsValidMove(int sq1, int sq2)
 	if (culoare1 == culoare2)
 		return false;
 
+	if (piece == pionalb)
+	{
+		
+		if (difc > 1)
+			return false;
+		
+		if (difl > 2)
+			return false;
+		
+		if (l1 <= l2)
+			return false;
+		if (difl == 2)
+		{
+			if (c2 != c1)
+				return false;
+
+			if (l1 != 6 || l2 != 4)
+				return false;
+
+			if (Table[l1 - 1][c1] != -1 || Table[l2][c2] != -1)
+				return false;
+
+			return true;
+		}
+		if (difl == 1 && difc == 0)
+		{
+			if (c2 != c1)
+				return false;
+
+			if (Table[l2][c2] != -1)
+				return false;
+			
+			return true;
+		}
+		if (difl == 1 && difc == 1)
+		{
+			
+
+			if (Table[l2][c2] == -1 && Table[l2+1][c2]!=pionnegru )
+				return false;
+		
+
+			return true;
+		}
+	}
+
+	if (piece == pionnegru)
+	{
+		if (difc > 1)
+			return false;
+
+		if (difl > 2)
+			return false;
+
+		if (l1 >= l2)
+			return false;
+
+		if (difl == 2)
+		{
+			if (c2 != c1)
+				return false;
+			if (l1 != 1 || l2 != 3)
+				return false;
+			if (Table[l1 + 1][c1] != -1 || Table[l2][c2] != -1)
+				return false;
+			return true;
+		}
+		if (difl == 1 && difc == 0)
+		{
+			if (c2 != c1)
+				return false;
+			if (Table[l2][c2] != -1)
+				return false;
+			return true;
+		}
+		if (difl == 1 && difc == 1)
+		{
+			if (Table[l2][c2] == -1 && Table[l2 - 1][c2] != pionnegru)
+				return false;
+			return false;
+		}
+	}
+
 	if (piece == calalb || piece == calnegru)
 	{
 		if (  (! (difc == 2 && difl == 1) ) && ( !(difc == 1 && difl == 2)  )   )
 		{
 			valid = 0;
-			cout << "mutare invalida cal"<<difc<<" "<<difl<<"\n";
 		}
 	}
 	if (piece == nebunalb || piece == nebunnegru)
@@ -439,38 +528,48 @@ bool IsValidMove(int sq1, int sq2)
 			caux += dc;
 		}
 	}
-	if (piece == damaalb || piece == damanegru)
+	if (piece == damaalb || piece == damanegru)   // problema
 	{
 		if (!(difl == 0 || difc == 0 || difl == difc))
 			return false;
+
 		if (difl == 0)
 		{
+			cout << 2;
 			caux = c1;
 			laux = l1;
 			dc = (c2 - c1) / difc;
+			caux = c1 + dc;
 			while (caux != c2)
 			{
 				if (Table[laux][caux] != -1)
 					return false;
 				caux += dc;
 			}
+
+			return true;
 		}
 		if (difc == 0)
 		{
 			caux = c1;
 			laux = l1;
-			dl = (c2 - c1) / difl;
+			dl = (l2 - l1) / difl;
+			laux = l1 + dl;
 			while (laux != l2)
 			{
 				if (Table[laux][caux] != -1)
+				{
 					return false;
+				}
 				laux += dl;
 			}
+			return true;
 		}
 		if (difc == difl)
 		{
+
 			dc = (c2 - c1) / difc;
-			dl = (c2 - c1) / difl;
+			dl = (l2 - l1) / difl;
 			laux = l1 + dl;
 			caux = c1 + dc;
 			while (laux != l2&&caux != c2)
@@ -480,6 +579,8 @@ bool IsValidMove(int sq1, int sq2)
 				laux += dl;
 				caux += dc;
 			}
+
+			return true;
 		}
 	}
 	
@@ -534,6 +635,10 @@ bool IsLegalMove(int sq1, int sq2)
 {
 	if (!IsValidMove(sq1, sq2))
 		return false;
+	int p1, p2;
+	p1 = Table[sq1 / 8][sq1 % 8];
+	p2 = Table[sq2 / 8][sq2 % 8];
+	Table[sq2 / 8][sq2 % 8] = Table[sq1 / 8][sq1 % 8];
 	int BlackKingLine, BlackKingColumn, WhiteKingLine, WhiteKingColumn, i, j, piece=Table[sq1/8][sq1%8] ;
 	for (i = 0; i < 8; i++)
 	{
@@ -554,10 +659,20 @@ bool IsLegalMove(int sq1, int sq2)
 
 	if (piece <= regealb)    // se acceseaza ba asta ba attackedby
 		if (IsAttackedByBlack(WhiteKingLine * 8 + WhiteKingColumn % 8) > 0)
+		{
+			Table[sq1 / 8][sq1 % 8]=p1;
+			Table[sq2 / 8][sq2 % 8]=p2;
 			return false;
+		}
 	if (piece > regealb)
 		if (IsAttackedByWhite(BlackKingLine * 8 + BlackKingColumn % 8) > 0)
+		{
+			Table[sq1 / 8][sq1 % 8] = p1;
+			Table[sq2 / 8][sq2 % 8] = p2;
 			return false;
+		}
+	Table[sq1 / 8][sq1 % 8] = p1;
+	Table[sq2 / 8][sq2 % 8] = p2;
 	return true;
 }
 
@@ -869,22 +984,27 @@ int PvsP()
 
 }
 
+
+void MainMenu()
+{
+	
+}
+
 int main(int argc, char* args[])
 {
-	cout << "test i\n";
 	char sir[5];
 	int i, j, sq1, sq2, l1, c1, l2, c2, tomove=1, piece;
 	init();
-	cout << "test init\n";
 	loadMedia();
-	cout << "test load media\n";
 	bool quit = false;
 	SDL_Event e;
+	setSQPort();
+	setWindowPort();
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
-	setSQPort();
+	
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
 	Init_Table();
 	Show_Table();
@@ -893,16 +1013,19 @@ int main(int argc, char* args[])
 		{
 				while (SDL_PollEvent(&e) != 0)
 				{
+					Show_Background();
+					Show_Table();
 					if (e.type == SDL_QUIT)
 					{
 						quit = true;
 					}
+					cout << "\nStarting SQ : ";
 					cin >> sir;
 					c1 = sir[0] - 'a';
 					l1 = sir[1] - '0';
 					l1 = 8 - l1;
 					sq1 = l1 * 8 + c1 % 8;
-
+					cout << "\nFinal SQ : ";
 					cin >> sir;
 					c2 = sir[0] - 'a';
 					l2 = sir[1] - '0';
@@ -910,22 +1033,27 @@ int main(int argc, char* args[])
 					sq2 = l2 * 8 + c2 % 8;
 					//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
 					piece = Table[l1][c1];
-					if(tomove==1 && (piece>=pionalb&&piece<=regealb))
-						if (IsValidMove(sq1, sq2))
+					if(tomove==1)
+						if (piece >= pionalb&&piece <= regealb && IsLegalMove(sq1, sq2))
 					{
 						//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
 						move(sq1, sq2);
 						Show_Table();
 						tomove = 1 - tomove;
 					}
-					if(tomove==0 && (piece >= pionnegru&&piece <= regenegru))
-						if (IsLegalMove(sq1, sq2))  // nu verifica daca intra in sah
-						{
-							//cout << l1 << " " << c1 << " " << l2 << " " << c2 << "\n";
-							move(sq1, sq2);
-							Show_Table();
-							tomove = 1 - tomove;
-						}
+						else cout << "\nMutare invalida\n";
+	
+					else
+						if(tomove==0)
+							if (IsLegalMove(sq1, sq2)&&(piece >= pionnegru&&piece <= regenegru))
+							{
+								move(sq1, sq2);
+								Show_Table();
+								tomove = 1 - tomove;
+							}
+							else cout << "\nMutare invalida\n";
+
+					
 				}
 				
 			}
