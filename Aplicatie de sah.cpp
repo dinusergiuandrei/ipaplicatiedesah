@@ -39,16 +39,17 @@ SDL_Rect TableViewport;
 
 void setSQPort();
 
-void PresentTableControl();
+void PresentTableControl(int T[10][10]);
 
-int IsAttackedByWhite(int sq);
+int IsAttackedByWhite(int T[10][10], int sq);
 
-int IsAttackedByBlack(int sq);
+int IsAttackedByBlack(int T[10][10], int sq);
 
-int Eval();
+int Eval(int T[10][10]);
 
-void MoveGenerator(int T[8][8], int tomove, int &sq1, int &sq2, int &minscore, int &maxscore, int depth);
+void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore, int &maxscore, int depth);
 
+void MainMenu();
 
 class LTexture
 {
@@ -216,40 +217,25 @@ bool init()
 
 void loadMedia()
 {
+	BackgroundTexture.loadFromFile("Images/bg_water.png");
 	Back_Image.loadFromFile("Images/back.png");
 	Main_Menu_Background.loadFromFile("Images/mainmenu.png");
 	Player_1_Image.loadFromFile("Images/player1.png");
 	Player_2_Image.loadFromFile("Images/player2.png");
 	Computer_Image.loadFromFile("Images/computer.png");
-	cout<<BackgroundTexture.loadFromFile("Images/bg_water.png")<<"\n";
-	cout << "background loaded successfully" << "\n";
 	TableTexture.loadFromFile("Images/tabla.png");
-	cout << "tabla loaded successfully" << "\n";
 	PieceTexture[pionalb].loadFromFile("Images/pionalb.png");
-	cout << "pionalb loaded successfully" << "\n";
 	PieceTexture[calalb].loadFromFile("Images/calalb.png");
-	cout << "calalb loaded successfully" << "\n";
 	PieceTexture[nebunalb].loadFromFile("Images/nebunalb.png");
-	cout << "nebunalb loaded successfully" << "\n";
 	PieceTexture[turnalb].loadFromFile("Images/turnalb.png");
-	cout << "turnalb loaded successfully" << "\n";
 	PieceTexture[damaalb].loadFromFile("Images/damaalb.png");
-	cout << "damaalb loaded successfully" << "\n";
 	PieceTexture[regealb].loadFromFile("Images/regealb.png");
-	cout << "regealb loaded successfully" << "\n";
 	PieceTexture[pionnegru].loadFromFile("Images/pionnegru.png");
-	cout << "pionnegru loaded successfully" << "\n";
 	PieceTexture[calnegru].loadFromFile("Images/calnegru.png");
-	cout << "calnegru loaded successfully" << "\n";
 	PieceTexture[nebunnegru].loadFromFile("Images/nebunnegru.png");
-	cout << "nebunnegru loaded successfully" << "\n";
 	PieceTexture[turnnegru].loadFromFile("Images/turnnegru.png");
-	cout << "turnnegru loaded successfully" << "\n";
 	PieceTexture[damanegru].loadFromFile("Images/damanegru.png");
-	cout << "damanegru loaded successfully" << "\n";
 	PieceTexture[regenegru].loadFromFile("Images/regenegru.png");
-	cout << "regenegru loaded successfully" << "\n";
-	
 }
 
 void close()
@@ -322,85 +308,85 @@ void setSQPort()
 	}
 }
 
-void put_piece(int p, int sq)
+void put_piece(int T[10][10],  int p, int sq)
 {
-	Table[sq / 8][sq % 8] = p;
+	T[sq / 8][sq % 8] = p;
 }
 
-int move(int sq1, int sq2)
+int move(int T[10][10], int sq1, int sq2)
 {
 	int captured;
-	if(Table[sq1/8][sq1%8]==regealb)
+	if(T[sq1/8][sq1%8]==regealb)
 		if (sq2 % 8 - sq1 % 8 == 2)
 		{
-			Table[7][7] = -1;
-			Table[7][5] = turnalb;
+			T[7][7] = -1;
+			T[7][5] = turnalb;
 		}
 		else
 			if (sq1 % 8 - sq2 % 8 == 2)
 			{
-				Table[7][0] = -1;
-				Table[7][3] = turnalb;
+				T[7][0] = -1;
+				T[7][3] = turnalb;
 			}
-	if (Table[sq1 / 8][sq1 % 8] == regenegru)
+	if (T[sq1 / 8][sq1 % 8] == regenegru)
 		if (sq2 % 8 - sq1 % 8 == 2)
 		{
-			Table[0][7] = -1;
-			Table[0][5] = turnnegru;
+			T[0][7] = -1;
+			T[0][5] = turnnegru;
 		}
 		else
 			if (sq1 % 8 - sq2 % 8 == 2)
 			{
-				Table[0][0] = -1;
-				Table[0][3] = turnnegru;
+				T[0][0] = -1;
+				T[0][3] = turnnegru;
 			}
-	captured = Table[sq2 / 8][sq2 % 8];
-	put_piece(Table[sq1 / 8][sq1 % 8], sq2);
-	Table[sq1 / 8][sq1 % 8] = -1;
+	captured = T[sq2 / 8][sq2 % 8];
+	put_piece(T, T[sq1 / 8][sq1 % 8], sq2);
+	T[sq1 / 8][sq1 % 8] = -1;
 	return captured;
 }
 
-void Init_Table()
+void Init_Table(int T[10][10])
 {
 	int i;
 	for (i = A8; i <= H1; i++)
-		Table[i / 8][i % 8] = -1;
+		T[i / 8][i % 8] = -1;
 	for(i=A7; i<=H7; i++)
-		put_piece(pionnegru, i);
+		put_piece(T, pionnegru, i);
 	for (i = A2; i <= H2; i++)
-		put_piece(pionalb, i);
-	put_piece(calalb, B1);
-	put_piece(calalb, G1);
-	put_piece(calnegru, B8);
-	put_piece(calnegru, G8);
-	put_piece(nebunalb, C1);
-	put_piece(nebunalb, F1);
-	put_piece(nebunnegru, C8);
-	put_piece(nebunnegru, F8);
-	put_piece(turnalb, A1);
-	put_piece(turnalb, H1);
-	put_piece(turnnegru, A8);
-	put_piece(turnnegru, H8);
-	put_piece(damaalb, D1);
-	put_piece(damanegru, D8);
-	put_piece(regealb, E1);
-	put_piece(regenegru, E8);
+		put_piece(T, pionalb, i);
+	put_piece(T, calalb, B1);
+	put_piece(T, calalb, G1);
+	put_piece(T, calnegru, B8);
+	put_piece(T, calnegru, G8);
+	put_piece(T, nebunalb, C1);
+	put_piece(T, nebunalb, F1);
+	put_piece(T, nebunnegru, C8);
+	put_piece(T, nebunnegru, F8);
+	put_piece(T, turnalb, A1);
+	put_piece(T, turnalb, H1);
+	put_piece(T, turnnegru, A8);
+	put_piece(T, turnnegru, H8);
+	put_piece(T, damaalb, D1);
+	put_piece(T, damanegru, D8);
+	put_piece(T, regealb, E1);
+	put_piece(T, regenegru, E8);
 }
 
-void Show_Table()
+void Show_Table(int T[10][10])
 {
 	int i;
 	//SDL_RenderClear(gRenderer);
 	Show_Board();
 	for (i = A8; i <= H1; i++)
-		if (Table[i / 8][i % 8] >= 0)
-			Show_Piece(Table[i / 8][i % 8], i);
+		if (T[i / 8][i % 8] >= 0)
+			Show_Piece(T[i / 8][i % 8], i);
 }
 
-bool IsValidMove(int sq1, int sq2)
+bool IsValidMove(int T[10][10], int sq1, int sq2)
 {
 	int valid = 1, culoare1=0, culoare2=-1, aux;
-	int piece = Table[sq1 / 8][sq1 % 8], piece2=Table[sq2/8][sq2%8];
+	int piece = T[sq1 / 8][sq1 % 8], piece2=T[sq2/8][sq2%8];
 	int l1, c1, l2, c2, difl, difc, dl, dc, caux, laux;
 	if(!(sq1>=0&&sq1<64&&sq2>=0&&sq2<64))
 		return false;
@@ -451,7 +437,7 @@ bool IsValidMove(int sq1, int sq2)
 			if (l1 != 6 || l2 != 4)
 				return false;
 
-			if (Table[l1 - 1][c1] != -1 || Table[l2][c2] != -1)
+			if (T[l1 - 1][c1] != -1 || T[l2][c2] != -1)
 				return false;
 
 			return true;
@@ -461,7 +447,7 @@ bool IsValidMove(int sq1, int sq2)
 			if (c2 != c1)
 				return false;
 
-			if (Table[l2][c2] != -1)
+			if (T[l2][c2] != -1)
 				return false;
 			
 			return true;
@@ -470,7 +456,7 @@ bool IsValidMove(int sq1, int sq2)
 		{
 			
 
-			if (Table[l2][c2] == -1 && Table[l2+1][c2]!=pionnegru )
+			if (T[l2][c2] == -1 && T[l2+1][c2]!=pionnegru )
 				return false;
 		
 
@@ -495,7 +481,7 @@ bool IsValidMove(int sq1, int sq2)
 				return false;
 			if (l1 != 1 || l2 != 3)
 				return false;
-			if (Table[l1 + 1][c1] != -1 || Table[l2][c2] != -1)
+			if (T[l1 + 1][c1] != -1 || T[l2][c2] != -1)
 				return false;
 			return true;
 		}
@@ -503,13 +489,13 @@ bool IsValidMove(int sq1, int sq2)
 		{
 			if (c2 != c1)
 				return false;
-			if (Table[l2][c2] != -1)
+			if (T[l2][c2] != -1)
 				return false;
 			return true;
 		}
 		if (difl == 1 && difc == 1)
 		{
-			if (Table[l2][c2] == -1 && Table[l2 - 1][c2] != pionalb)
+			if (T[l2][c2] == -1 && T[l2 - 1][c2] != pionalb)
 				return false;
 			return true;
 		}
@@ -534,7 +520,7 @@ bool IsValidMove(int sq1, int sq2)
 		caux = c1 + dc;
 		while (laux != l2)
 		{
-			if (Table[laux][caux] != -1)
+			if (T[laux][caux] != -1)
 				return false;
 			laux += dl;
 			caux += dc;
@@ -555,7 +541,7 @@ bool IsValidMove(int sq1, int sq2)
 			caux = c1 + dc;
 			while (caux != c2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 					return false;
 				caux += dc;
 			}
@@ -570,7 +556,7 @@ bool IsValidMove(int sq1, int sq2)
 			laux = l1 + dl;
 			while (laux != l2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 				{
 					return false;
 				}
@@ -596,7 +582,7 @@ bool IsValidMove(int sq1, int sq2)
 			caux = c1 + dc;
 			while (caux != c2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 					return false;
 				caux += dc;
 			}
@@ -611,7 +597,7 @@ bool IsValidMove(int sq1, int sq2)
 			laux = l1 + dl;
 			while (laux != l2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 				{
 					return false;
 				}
@@ -628,7 +614,7 @@ bool IsValidMove(int sq1, int sq2)
 			caux = c1 + dc;
 			while (laux != l2&&caux != c2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 					return false;
 				laux += dl;
 				caux += dc;
@@ -654,17 +640,17 @@ bool IsValidMove(int sq1, int sq2)
 					return false;
 				if (sq2 == 7 * 8 + 6)
 				{
-					if (Table[7][7] != turnalb)
+					if (T[7][7] != turnalb)
 						return false;
-					if (Table[7][5] != -1 || Table[7][6] != -1)
+					if (T[7][5] != -1 || T[7][6] != -1)
 						return false;
 					return true;
 				}
 				if (sq2 == 7 * 8 + 2)
 				{
-					if (Table[7][0] != turnalb)
+					if (T[7][0] != turnalb)
 						return false;
-					if (Table[7][2] != -1 || Table[7][3] != -1 || Table[7][1] != -1)
+					if (T[7][2] != -1 || T[7][3] != -1 || T[7][1] != -1)
 						return false;
 					return true;
 				}
@@ -677,17 +663,17 @@ bool IsValidMove(int sq1, int sq2)
 					return false;
 				if (sq2 == 6)
 				{
-					if (Table[0][7] != turnnegru)
+					if (T[0][7] != turnnegru)
 						return false;
-					if (Table[0][5] != -1 || Table[0][6] != -1)
+					if (T[0][5] != -1 || T[0][6] != -1)
 						return false;
 					return true;
 				}
 				if (sq2 == 2)
 				{
-					if (Table[0][0] != turnnegru)
+					if (T[0][0] != turnnegru)
 						return false;
-					if (Table[0][1] != -1 || Table[0][2] != -1 || Table[0][3] != -1)
+					if (T[0][1] != -1 || T[0][2] != -1 || T[0][3] != -1)
 						return false;
 					return true;
 				}
@@ -700,7 +686,7 @@ bool IsValidMove(int sq1, int sq2)
 			dc = (c2 - c1) / difc;
 			while (caux != c2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 					return false;
 				caux += dc;
 			}
@@ -712,7 +698,7 @@ bool IsValidMove(int sq1, int sq2)
 			dl = (c2 - c1) / difl;
 			while (laux != l2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 					return false;
 				laux += dl;
 			}
@@ -725,7 +711,7 @@ bool IsValidMove(int sq1, int sq2)
 			caux = c1 + dc;
 			while (laux != l2&&caux != c2)
 			{
-				if (Table[laux][caux] != -1)
+				if (T[laux][caux] != -1)
 					return false;
 				laux += dl;
 				caux += dc;
@@ -736,25 +722,25 @@ bool IsValidMove(int sq1, int sq2)
 	return valid;
 }
 
-bool IsLegalMove(int sq1, int sq2)
+bool IsLegalMove(int T[10][10], int sq1, int sq2)
 {
-	if (!IsValidMove(sq1, sq2))
+	if (!IsValidMove(T, sq1, sq2))
 		return false;
 	int p1, p2;
-	p1 = Table[sq1 / 8][sq1 % 8];
-	p2 = Table[sq2 / 8][sq2 % 8];
-	Table[sq2 / 8][sq2 % 8] = Table[sq1 / 8][sq1 % 8];
-	int BlackKingLine, BlackKingColumn, WhiteKingLine, WhiteKingColumn, i, j, piece=Table[sq1/8][sq1%8] ;
+	p1 = T[sq1 / 8][sq1 % 8];
+	p2 = T[sq2 / 8][sq2 % 8];
+	T[sq2 / 8][sq2 % 8] = T[sq1 / 8][sq1 % 8];
+	int BlackKingLine, BlackKingColumn, WhiteKingLine, WhiteKingColumn, i, j, piece=T[sq1/8][sq1%8] ;
 	for (i = 0; i < 8; i++)
 	{
 		for (j = 0; j < 8; j++)
 		{
-			if (Table[i][j] == regealb)
+			if (T[i][j] == regealb)
 			{
 				WhiteKingLine = i;
 				WhiteKingColumn = j;
 			}
-			if (Table[i][j] == regenegru)
+			if (T[i][j] == regenegru)
 			{
 				BlackKingColumn = j;
 				BlackKingLine = i;
@@ -763,44 +749,44 @@ bool IsLegalMove(int sq1, int sq2)
 	}
 
 	if (piece <= regealb)    // se acceseaza ba asta ba attackedby
-		if (IsAttackedByBlack(WhiteKingLine * 8 + WhiteKingColumn % 8) > 0)
+		if (IsAttackedByBlack(T, WhiteKingLine * 8 + WhiteKingColumn % 8) > 0)
 		{
-			Table[sq1 / 8][sq1 % 8]=p1;
-			Table[sq2 / 8][sq2 % 8]=p2;
+			T[sq1 / 8][sq1 % 8]=p1;
+			T[sq2 / 8][sq2 % 8]=p2;
 			return false;
 		}
 	if (piece > regealb)
-		if (IsAttackedByWhite(BlackKingLine * 8 + BlackKingColumn % 8) > 0)
+		if (IsAttackedByWhite(T, BlackKingLine * 8 + BlackKingColumn % 8) > 0)
 		{
-			Table[sq1 / 8][sq1 % 8] = p1;
-			Table[sq2 / 8][sq2 % 8] = p2;
+			T[sq1 / 8][sq1 % 8] = p1;
+			T[sq2 / 8][sq2 % 8] = p2;
 			return false;
 		}
-	Table[sq1 / 8][sq1 % 8] = p1;
-	Table[sq2 / 8][sq2 % 8] = p2;
+	T[sq1 / 8][sq1 % 8] = p1;
+	T[sq2 / 8][sq2 % 8] = p2;
 	return true;
 }
 
-int IsAttackedByWhite(int sq)
+int IsAttackedByWhite(int T[10][10], int sq)
 {
 	int piece, i, j, attacked = 0, vl, vc, dir;
 
 	for (i = 0; i<8; i++)
 		for (j = 0; j < 8; j++)
 		{
-			piece = Table[i][j];
+			piece = T[i][j];
 			if (piece == pionalb)
 			{
 				vl = i - 1;
 				vc = j - 1;
 				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					if (vl * 8 + vc % 8 == sq)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 						attacked++;
 				vc = j + 1;
 				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					if (vl * 8 + vc % 8 == sq)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 						attacked++;
 			}
 			if (piece == calalb)
@@ -810,7 +796,7 @@ int IsAttackedByWhite(int sq)
 					vl = i + dcl[dir];
 					vc = j + dcc[dir];
 					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 				}
@@ -824,7 +810,7 @@ int IsAttackedByWhite(int sq)
 					vc = j + dc[dir];
 					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8 )
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 						vl += dl[dir];
@@ -841,7 +827,7 @@ int IsAttackedByWhite(int sq)
 					vc = j + dc[dir];
 					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 						vl += dl[dir];
@@ -858,7 +844,7 @@ int IsAttackedByWhite(int sq)
 					vc = j + dc[dir];
 					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 						vl += dl[dir];
@@ -875,7 +861,7 @@ int IsAttackedByWhite(int sq)
 					vc = j + dc[dir];
 					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 					}
@@ -884,29 +870,29 @@ int IsAttackedByWhite(int sq)
 
 		}
 
-return attacked;
+	return attacked;
 }
 
-int IsAttackedByBlack(int sq)
+int IsAttackedByBlack(int T[10][10], int sq)
 {
 	int piece, i, j, attacked = 0, dir, vl ,vc;
 
 	for (i = 0; i<8; i++)
 		for (j = 0; j < 8; j++)
 		{
-			piece = Table[i][j];
+			piece = T[i][j];
 			if (piece == pionnegru)
 			{
 				vl = i + 1;
 				vc = j - 1;
 				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					if (vl * 8 + vc % 8 == sq)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 						attacked++;
 				vc = j + 1;
 				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					if (vl * 8 + vc % 8 == sq)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 						attacked++;
 			}
 
@@ -917,7 +903,7 @@ int IsAttackedByBlack(int sq)
 					vl = i + dcl[dir];
 					vc = j + dcc[dir];
 					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 				}
@@ -932,7 +918,7 @@ int IsAttackedByBlack(int sq)
 					vc = j + dc[dir];
 					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 						vl += dl[dir];
@@ -949,7 +935,7 @@ int IsAttackedByBlack(int sq)
 					vc = j + dc[dir];
 					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 						vl += dl[dir];
@@ -966,7 +952,7 @@ int IsAttackedByBlack(int sq)
 					vc = j + dc[dir];
 					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 						vl += dl[dir];
@@ -982,7 +968,7 @@ int IsAttackedByBlack(int sq)
 					vc = j + dc[dir];
 					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 					{
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
+						if (IsValidMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 							if (vl * 8 + vc % 8 == sq)
 								attacked++;
 					}
@@ -993,7 +979,7 @@ int IsAttackedByBlack(int sq)
 return attacked;
 }
 
-void PresentTableControl()
+void PresentTableControl(int T[10][10])
 {
 	int i, j, col, piece, vl, vc, dir;
 	for (i = 0; i < 8; i++)
@@ -1008,32 +994,32 @@ void PresentTableControl()
 	{
 		for (j = 0; j < 8; j++)
 		{
-			WhiteControl[i][j] = IsAttackedByWhite(i * 8 + i % 8);  
-			BlackControl[i][j] = IsAttackedByBlack(i * 8 + i % 8);	
+			WhiteControl[i][j] = IsAttackedByWhite(T, i * 8 + i % 8);  
+			BlackControl[i][j] = IsAttackedByBlack(T, i * 8 + i % 8);	
 		}
 	}
 }
 
 
 
-bool ismate(int tomove)
+bool ismate(int T[10][10], int tomove)
 {
 	int king, i, j, kingl, kingc, attacked=0, dir, vl, vc;
-	if (tomove == 0)
+	if (tomove == 1)
 		king = regealb;
 	else king = regenegru;
 	for(i=0; i<8; i++)
 		for(j=0; j<8; j++)
-			if (Table[i][j] == king)
+			if (T[i][j] == king)
 			{
 				kingl = i;
 				kingc = j;
 			}
 	if (king == regealb)
-		if (IsAttackedByBlack(kingl * 8 + kingc % 8) > 0)
+		if (IsAttackedByBlack(T, kingl * 8 + kingc % 8) > 0)
 			attacked = 1;
 	if(king==regenegru)
-		if (IsAttackedByWhite(kingl * 8 + kingc % 8) > 0)
+		if (IsAttackedByWhite(T, kingl * 8 + kingc % 8) > 0)
 			attacked = 1;
 	if (!attacked)
 		return false;
@@ -1041,7 +1027,7 @@ bool ismate(int tomove)
 	{
 		vl = kingl + dl[dir];
 		vc = kingc + dc[dir];
-		if (IsLegalMove(kingl * 8 + kingc % 8, vl * 8 + vc % 8) == 1)
+		if (IsLegalMove(T, kingl * 8 + kingc % 8, vl * 8 + vc % 8) == 1)
 			return false;
 	}
 	return true;
@@ -1057,7 +1043,7 @@ void RenderToMouse(int p)
 	mouseport.y = y;
 	mouseport.h = SQPort[0].h;
 	mouseport.w = SQPort[0].w;
-	if(p<regenegru)
+	if(p<=regenegru)
 	PieceTexture[p].render(mouseport);
 }
 
@@ -1096,7 +1082,7 @@ void Show_Player1()
 	int i;
 	SDL_Rect Player1_Port;
 	Player1_Port.x = 720;
-	Player1_Port.y = 72;
+	Player1_Port.y = 575;
 	Player1_Port.w = 280;
 	Player1_Port.h = 70;
 	SDL_RenderSetViewport(gRenderer, &Player1_Port);
@@ -1108,11 +1094,23 @@ void Show_Player2()
 	int i;
 	SDL_Rect Player2_Port;
 	Player2_Port.x = 720;
-	Player2_Port.y = 575;
+	Player2_Port.y = 72; 
 	Player2_Port.w = 280;
 	Player2_Port.h = 70;
 	SDL_RenderSetViewport(gRenderer, &Player2_Port);
 	Player_2_Image.render(Player2_Port);
+}
+
+void Show_Computer()
+{
+	int i;
+	SDL_Rect Computer_Port;
+	Computer_Port.x = 720;
+	Computer_Port.y = 72;
+	Computer_Port.w = 280;
+	Computer_Port.h = 70;
+	SDL_RenderSetViewport(gRenderer, &Computer_Port);
+	Computer_Image.render(Computer_Port);
 }
 
 void vsPlayer()
@@ -1120,8 +1118,8 @@ void vsPlayer()
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
-	Init_Table();
-	Show_Table();
+	Init_Table(Table);
+	Show_Table(Table);
 	Show_Player1();
 	Show_Player2();
 	//Show_Computer();
@@ -1158,7 +1156,7 @@ void vsPlayer()
 							{
 								piece = Table[sq1 / 8][sq1 % 8];
 								
-								Show_Table();
+								Show_Table(Table);
 								
 								SDL_PollEvent(&e);
 								while (e.type != SDL_MOUSEBUTTONUP)
@@ -1178,26 +1176,34 @@ void vsPlayer()
 											
 											Table[sq1 / 8][sq1 % 8] = piece;
 											if (tomove == 1)
-												if (piece >= pionalb&&piece <= regealb && IsLegalMove(sq1, sq2))
+												if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
 												{
 													Table[sq1 / 8][sq1 % 8] = piece;
-													move(sq1, sq2);
-													Show_Table();
+													move(Table, sq1, sq2);
+													Show_Table(Table);
 													tomove = 1 - tomove;
 												}
 												else;
 
 											else
 												if (tomove == 0)
-													if (IsLegalMove(sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+													if (IsLegalMove(Table, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
 													{
 														Table[sq1 / 8][sq1 % 8] = piece;
-														move(sq1, sq2);
-														Show_Table();
+														move(Table, sq1, sq2);
+														Show_Table(Table);
 														tomove = 1 - tomove;
 													}
 													else;
+											if (ismate(Table, tomove))
+											{
+												quit = 1;
+												cout << 0 - tomove << " wins\n";
+												//Show window "-tomove wins" 
+												SDL_Delay(3000);
+												MainMenu();
 
+											}
 
 													//
 										}
@@ -1225,170 +1231,527 @@ void vsComputer()
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
-	Init_Table();
-	Show_Table();
+	Init_Table(Table);
+	Show_Table(Table);
+	Show_Player1();
+	Show_Computer();
 	char sir[5];
-	int i, j, sq1, sq2, l1, c1, l2, c2, tomove = 1, piece;
+	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, depth=2, player_colour=1, minscore, maxscore;
 	bool quit = false;
 	SDL_Event e;
-	i = 0;
 	while (!quit)
 	{
-		while (SDL_PollEvent(&e) != 0)
+		if (tomove == player_colour)
 		{
-			if (e.type == SDL_QUIT)
+			while (SDL_PollEvent(&e) != 0)
 			{
-				quit = true;
-			}
-			cout << "\nStarting SQ : ";
-			cin >> sir;
-			c1 = sir[0] - 'a';
-			l1 = sir[1] - '0';
-			l1 = 8 - l1;
-			sq1 = l1 * 8 + c1 % 8;
-			cout << "\nFinal SQ : ";
-			cin >> sir;
-			c2 = sir[0] - 'a';
-			l2 = sir[1] - '0';
-			l2 = 8 - l2;
-			sq2 = l2 * 8 + c2 % 8;
-
-			piece = Table[l1][c1];
-			if (tomove == 1)
-				if (piece >= pionalb&&piece <= regealb && IsLegalMove(sq1, sq2))
+				if (e.type == SDL_QUIT)
 				{
-
-					move(sq1, sq2);
-					Show_Table();
-					tomove = 1 - tomove;
+					quit = true;
 				}
-				else cout << "\nMutare invalida\n";
+				if (e.type == SDL_MOUSEBUTTONDOWN)
+				{
+					sq1 = -1;
+					sq2 = -1;
+					int x, y;
+					SDL_GetMouseState(&x, &y);
+					int inside;
+					if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+						inside = 1;
+					else inside = 0;
+					if (inside)
+						for (i = 0; i < 64; i++)
+							if (x >= SQPort[i].x&&x <= SQPort[i].x + SQPort[i].w&&y >= SQPort[i].y&&y <= SQPort[i].y + SQPort[i].h)
+							{
+								sq1 = i;
+								if (Table[sq1 / 8][sq1 % 8] != -1)
+								{
+									piece = Table[sq1 / 8][sq1 % 8];
 
-			else
-				if (tomove == 0)
-					if (IsLegalMove(sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
-					{
-						move(sq1, sq2);
-						Show_Table();
-						tomove = 1 - tomove;
-					}
-					else cout << "\nMutare invalida\n";
+									Show_Table(Table);
 
+									SDL_PollEvent(&e);
+									while (e.type != SDL_MOUSEBUTTONUP)
+									{
+										SDL_PollEvent(&e);
+									}
+									SDL_GetMouseState(&x, &y);
+									if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+										inside = 1;
+									else inside = 0;
+									if (inside)
+										for (j = 0; j < 64; j++)
+										{
+											if (x >= SQPort[j].x&&x <= SQPort[j].x + SQPort[j].w&&y >= SQPort[j].y&&y <= SQPort[j].y + SQPort[j].h)
+											{
+												sq2 = j;
+
+												Table[sq1 / 8][sq1 % 8] = piece;
+												if (tomove == 1)
+													if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
+													{
+														Table[sq1 / 8][sq1 % 8] = piece;
+														move(Table, sq1, sq2);
+														Show_Table(Table);
+														tomove = 0 - tomove;
+													}
+													else;
+
+												else
+													if (tomove == 0)
+														if (IsLegalMove(Table, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+														{
+															Table[sq1 / 8][sq1 % 8] = piece;
+															move(Table, sq1, sq2);
+															Show_Table(Table);
+															tomove = 0 - tomove;
+														}
+														else;
+
+
+														//
+											}
+										}
+								}
+							}
+
+				}
+
+			}
+			if (ismate(Table, tomove))
+			{
+				quit = 1;
+				cout << 0 - tomove << " wins\n";
+				//Show window "-tomove wins" 
+				MainMenu();
+				SDL_Delay(3000);
+				
+			}
 
 		}
+		else
+		{
+			//make computer move
+			sq1 = 2;
+			sq2 = 5;
+			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 1);
+			cout << sq1 << " to " << sq2 << "\n";
+			move(Table, sq1, sq2);
+			Show_Table(Table);
+			tomove = 0 - tomove;
+			if (ismate(Table, tomove))
+			{
+				quit = 1;
+				cout << 0 - tomove << " wins\n";
+				//Show window "-tomove wins" 
+				MainMenu();
+				SDL_Delay(3000);
 
+			}
+		}
 	}
 }
 
 
-void MoveGenerator(int T[8][8], int tomove, int &sq1, int &sq2, int &minscore, int &maxscore, int depth)
+void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore, int &maxscore, int depth)
 {
-	int piece, i, j, attacked = 0, dir, vl, vc, cmaxscore, cminscore, sq;
-	//codul de la attacked by
-	//pentru fiecare mutare posibila
-	for (i = 0; i<8; i++)
-		for (j = 0; j < 8; j++)
-		{
-			piece = T[i][j];
-			sq = i * 8 + j;
-			if (piece == pionnegru)
+	int best_move_sq1=2, best_move_sq2=3;
+	int piece, i, j, attacked = 0, dir, vl, vc, cmaxscore = -100000, cminscore = 100000, cscore;
+	int T2[10][10], i2, j2, csq1, csq2, cmaxscore2, cminscore2;
+	depth = 1; // doar pentru test
+	if (depth > 0)
+	{
+		
+		//codul de la attacked by
+		//pentru fiecare mutare posibila
+		//cmaxscore = cminscore = Eval(T);
+		for (i = 0; i < 8; i++)
+			for (j = 0; j < 8; j++)
 			{
-				vl = i + 1;
-				vc = j - 1;
-				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-					if (vl * 8 + vc % 8 == sq)
-						if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							attacked++;
-				vc = j + 1;
-				if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-					if (vl * 8 + vc % 8 == sq)
-						if (IsValidMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							attacked++;
-			}
-
-			if (piece == calnegru)
-			{
-				for (dir = 0; dir < 8; dir++)
+				piece = T[i][j];
+				if (piece == pionnegru)
 				{
-					vl = i + dcl[dir];
-					vc = j + dcc[dir];
+					vl = i + 1;
+					vc = j - 1;
 					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							if (vl * 8 + vc % 8 == sq)
-								attacked++;
-				}
-			}
-
-
-			if (piece == nebunnegru)
-			{
-				for (dir = 4; dir < 8; dir++)
-				{
-					vl = i + dl[dir];
-					vc = j + dc[dir];
-					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-					{
-						if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							if (vl * 8 + vc % 8 == sq)
-								attacked++;
-						vl += dl[dir];
-						vc += dc[dir];
-					}
-				}
-			}
-
-			if (piece == turnnegru)
-			{
-				for (dir = 0; dir < 4; dir++)
-				{
-					vl = i + dl[dir];
-					vc = j + dc[dir];
-					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-					{
-						if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							if (vl * 8 + vc % 8 == sq)
-								attacked++;
-						vl += dl[dir];
-						vc += dc[dir];
-					}
-				}
-			}
-
-			if (piece == damanegru)
-			{
-				for (dir = 0; dir < 8; dir++)
-				{
-					vl = i + dl[dir];
-					vc = j + dc[dir];
-					while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-					{
-						if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							if (vl * 8 + vc % 8 == sq)
-								attacked++;
-						vl += dl[dir];
-						vc += dc[dir];
-					}
-				}
-			}
-			if (piece == regenegru)
-			{
-				for (dir = 0; dir < 8; dir++)
-				{
-					vl = i + dl[dir];
-					vc = j + dc[dir];
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i][j] = T[i][j];
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+								if (depth == 1)
+								{
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										if (tomove == 1)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									if (cscore < cminscore)
+										if (tomove == -1)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+								else
+								{
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+										if (tomove == 1)
+										{
+											best_move_sq1 = csq1;
+											best_move_sq2 = csq2;
+											cmaxscore = cminscore2;
+										}
+									if (cmaxscore2 < cminscore)
+										if (tomove == -1)
+										{
+											best_move_sq1 = csq1;
+											best_move_sq2 = csq2;
+											cminscore = cmaxscore2;
+										}
+								}
+							}
+					vc = j + 1;
 					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i][j] = T[i][j];
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+								if (depth == 1)
+								{
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										if (tomove == 1)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									if (cscore < cminscore)
+										if (tomove == -1)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+								else
+								{
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+										if (tomove == 1)
+										{
+											best_move_sq1 = csq1;
+											best_move_sq2 = csq2;
+											cmaxscore = cminscore2;
+										}
+									if (cmaxscore2 < cminscore)
+										if (tomove == -1)
+										{
+											best_move_sq1 = csq1;
+											best_move_sq2 = csq2;
+											cminscore = cmaxscore2;
+										}
+								}
+							}
+				}
+
+				if (piece == calnegru||piece==calalb)
+				{
+					for (dir = 0; dir < 8; dir++)
 					{
-						if (IsLegalMove(i * 8 + j % 8, vl * 8 + vc % 8))
-							if (vl * 8 + vc % 8 == sq)
-								attacked++;
+						vl = i + dcl[dir];
+						vc = j + dcc[dir];
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i][j] = T[i][j];
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+									if (depth == 1)
+									{
+										cscore = Eval(T2);
+										if (cscore > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cmaxscore = cscore;
+											}
+										if (cscore < cminscore)
+											if (tomove == -1)
+											{
+												
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cminscore = cscore;
+											}
+									}
+									else
+									{
+										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+										if (cminscore2 > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cmaxscore = cminscore2;
+											}
+										if (cmaxscore2 < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cminscore = cmaxscore2;
+											}
+									}
+								}
+					}
+				}
+
+				if (piece == nebunnegru||piece==nebunalb)
+				{
+					for (dir = 4; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i][j] = T[i][j];
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+									if (depth == 1)
+									{
+										cscore = Eval(T2);
+										if (cscore > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cmaxscore = cscore;
+											}
+										if (cscore < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cminscore = cscore;
+											}
+									}
+									else
+									{
+										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+										if (cminscore2 > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cmaxscore = cminscore2;
+											}
+										if (cmaxscore2 < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cminscore = cmaxscore2;
+											}
+									}
+								}
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+
+				if (piece == turnnegru||piece==turnalb)
+				{
+					for (dir = 0; dir < 4; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i][j] = T[i][j];
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+									if (depth == 1)
+									{
+										cscore = Eval(T2);
+										if (cscore > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cmaxscore = cscore;
+											}
+										if (cscore < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cminscore = cscore;
+											}
+									}
+									else
+									{
+										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+										if (cminscore2 > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cmaxscore = cminscore2;
+											}
+										if (cmaxscore2 < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cminscore = cmaxscore2;
+											}
+									}
+								}
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+
+				if (piece == damanegru||piece==damaalb)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i][j] = T[i][j];
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+									if (depth == 1)
+									{
+										cscore = Eval(T2);
+										if (cscore > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cmaxscore = cscore;
+											}
+										if (cscore < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cminscore = cscore;
+											}
+									}
+									else
+									{
+										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+										if (cminscore2 > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cmaxscore = cminscore2;
+											}
+										if (cmaxscore2 < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cminscore = cmaxscore2;
+											}
+									}
+								}
+							vl += dl[dir];
+							vc += dc[dir];
+						}
+					}
+				}
+				if (piece == regenegru||piece== regealb)
+				{
+					for (dir = 0; dir < 8; dir++)
+					{
+						vl = i + dl[dir];
+						vc = j + dc[dir];
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+						{
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i][j] = T[i][j];
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+									if (depth == 1)
+									{
+										cscore = Eval(T2);
+										if (cscore > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cmaxscore = cscore;
+											}
+										if (cscore < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = i * 8 + j % 8;
+												best_move_sq2 = vl * 8 + vc % 8;
+												cminscore = cscore;
+											}
+									}
+									else
+									{
+										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+										if (cminscore2 > cmaxscore)
+											if (tomove == 1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cmaxscore = cminscore2;
+											}
+										if (cmaxscore2 < cminscore)
+											if (tomove == -1)
+											{
+												best_move_sq1 = csq1;
+												best_move_sq2 = csq2;
+												cminscore = cmaxscore2;
+											}
+									}
+								}
+						}
 					}
 				}
 			}
-		}
-
+	}
+	sq1 = best_move_sq1;
+	sq2 = best_move_sq2;
+	minscore = cminscore;
+	maxscore = cmaxscore;
 }
 
-int Eval(int T[8][8] )
+int Eval(int T[10][10] )
 {
 	int score = 0, l, c, piece, sq;
 	for(l=0; l<8; l++)
@@ -1400,8 +1763,8 @@ int Eval(int T[8][8] )
 			{
 				score += Piece_Value[piece];
 			}
-			score += IsAttackedByBlack(sq)*SQ_Value_Black[sq];
-			score += IsAttackedByWhite(sq)*SQ_Value_White[sq];
+			score += IsAttackedByBlack(T, sq)*SQ_Value_Black[sq];
+			score += IsAttackedByWhite(T, sq)*SQ_Value_White[sq];
 		}
 	return score;
 }
@@ -1471,7 +1834,7 @@ int main(int argc, char* args[])
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(gRenderer);
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
-	
+
 	MainMenu();
 	close();
 	
