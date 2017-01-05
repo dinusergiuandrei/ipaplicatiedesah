@@ -1334,7 +1334,7 @@ void vsComputer()
 			//make computer move
 			sq1 = 2;
 			sq2 = 5;
-			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 1);
+			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 2);
 			cout << sq1 << " to " << sq2 << "\n";
 			move(Table, sq1, sq2);
 			Show_Table(Table);
@@ -1355,395 +1355,951 @@ void vsComputer()
 
 void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore, int &maxscore, int depth)
 {
-	int best_move_sq1=2, best_move_sq2=3;
-	int piece, i, j, attacked = 0, dir, vl, vc, cmaxscore = -100000, cminscore = 100000, cscore;
+	
+	int best_move_for_white_sq1 = 2, best_move_for_white_sq2 = 3;
+	int best_move_for_black_sq1=2, best_move_for_black_sq2=3;
+	int best_move_sq1, best_move_sq2;
+
+	int piece, i, j, attacked = 0, dir, vl, vc, cmaxscore = -1000000, cminscore = 1000000, cscore;
 	int T2[10][10], i2, j2, csq1, csq2, cmaxscore2, cminscore2;
-	depth = 1; // doar pentru test
-	if (depth > 0)
+	 // doar pentru test
+	if (depth == 1)
 	{
-		
-		//codul de la attacked by
 		//pentru fiecare mutare posibila
 		//cmaxscore = cminscore = Eval(T);
-		for (i = 0; i < 8; i++)
-			for (j = 0; j < 8; j++)
-			{
-				piece = T[i][j];
-				if (piece == pionnegru)
+		if (tomove == -1)
+		{
+			for (i = 0; i < 8; i++)
+				for (j = 0; j < 8; j++)
 				{
-					vl = i + 1;
-					vc = j - 1;
-					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
-							{
-								for (i2 = 0; i2 < 8; i2++)
-									for (j2 = 0; j2 < 8; j2++)
-										T2[i][j] = T[i][j];
-								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-								if (depth == 1)
-								{
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
-										if (tomove == 1)
-										{
-											best_move_sq1 = i * 8 + j % 8;
-											best_move_sq2 = vl * 8 + vc % 8;
-											cmaxscore = cscore;
-										}
-									if (cscore < cminscore)
-										if (tomove == -1)
-										{
-											best_move_sq1 = i * 8 + j % 8;
-											best_move_sq2 = vl * 8 + vc % 8;
-											cminscore = cscore;
-										}
-								}
-								else
-								{
-									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-									if (cminscore2 > cmaxscore)
-										if (tomove == 1)
-										{
-											best_move_sq1 = csq1;
-											best_move_sq2 = csq2;
-											cmaxscore = cminscore2;
-										}
-									if (cmaxscore2 < cminscore)
-										if (tomove == -1)
-										{
-											best_move_sq1 = csq1;
-											best_move_sq2 = csq2;
-											cminscore = cmaxscore2;
-										}
-								}
-							}
-					vc = j + 1;
-					if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
-							{
-								for (i2 = 0; i2 < 8; i2++)
-									for (j2 = 0; j2 < 8; j2++)
-										T2[i][j] = T[i][j];
-								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-								if (depth == 1)
-								{
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
-										if (tomove == 1)
-										{
-											best_move_sq1 = i * 8 + j % 8;
-											best_move_sq2 = vl * 8 + vc % 8;
-											cmaxscore = cscore;
-										}
-									if (cscore < cminscore)
-										if (tomove == -1)
-										{
-											best_move_sq1 = i * 8 + j % 8;
-											best_move_sq2 = vl * 8 + vc % 8;
-											cminscore = cscore;
-										}
-								}
-								else
-								{
-									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-									if (cminscore2 > cmaxscore)
-										if (tomove == 1)
-										{
-											best_move_sq1 = csq1;
-											best_move_sq2 = csq2;
-											cmaxscore = cminscore2;
-										}
-									if (cmaxscore2 < cminscore)
-										if (tomove == -1)
-										{
-											best_move_sq1 = csq1;
-											best_move_sq2 = csq2;
-											cminscore = cmaxscore2;
-										}
-								}
-							}
-				}
-
-				if (piece == calnegru||piece==calalb)
-				{
-					for (dir = 0; dir < 8; dir++)
+					piece = T[i][j];
+					if (piece == pionnegru)
 					{
-						vl = i + dcl[dir];
-						vc = j + dcc[dir];
+						vl = i + 1;
+						vc = j - 1;
 						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
 							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								cscore = Eval(T2);
 							
-								{
-									for (i2 = 0; i2 < 8; i2++)
-										for (j2 = 0; j2 < 8; j2++)
-											T2[i][j] = T[i][j];
-									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-									if (depth == 1)
+								if (cscore < cminscore)
 									{
-										cscore = Eval(T2);
-										if (cscore > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cmaxscore = cscore;
-											}
-										if (cscore < cminscore)
-											if (tomove == -1)
-											{
-												
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cminscore = cscore;
-											}
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
 									}
-									else
-									{
-										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-										if (cminscore2 > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cmaxscore = cminscore2;
-											}
-										if (cmaxscore2 < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cminscore = cmaxscore2;
-											}
-									}
-								}
-					}
-				}
+							}
+							vc = j + 1;
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
 
-				if (piece == nebunnegru||piece==nebunalb)
-				{
-					for (dir = 4; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								cscore = Eval(T2);
+		
+								if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
+							}
+							vl = i + 1;
+							vc = j;
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
 								{
 									for (i2 = 0; i2 < 8; i2++)
 										for (j2 = 0; j2 < 8; j2++)
-											T2[i][j] = T[i][j];
+											T2[i2][j2] = T[i2][j2];
+
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-									if (depth == 1)
+
+									cscore = Eval(T2);
+
+									if (cscore < cminscore)
 									{
-										cscore = Eval(T2);
-										if (cscore > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cmaxscore = cscore;
-											}
-										if (cscore < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cminscore = cscore;
-											}
-									}
-									else
-									{
-										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-										if (cminscore2 > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cmaxscore = cminscore2;
-											}
-										if (cmaxscore2 < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cminscore = cmaxscore2;
-											}
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
 									}
 								}
-							vl += dl[dir];
-							vc += dc[dir];
+							vl = i + 2;
+					}
+
+					if (piece == calnegru)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dcl[dir];
+							vc = j + dcc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									
+									if (cscore < cminscore)
+
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+						}
+					}
+
+					if (piece == nebunnegru)
+					{
+						for (dir = 4; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									
+									if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == turnnegru)
+					{
+						for (dir = 0; dir < 4; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									
+									if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == damanegru)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									
+									if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+					if (piece == regenegru)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									
+									if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+								}
+							}
 						}
 					}
 				}
-
-				if (piece == turnnegru||piece==turnalb)
+		}
+		if(tomove==1)
+		{
+			for (i = 0; i < 8; i++)
+				for (j = 0; j < 8; j++)
 				{
-					for (dir = 0; dir < 4; dir++)
+					piece = T[i][j];
+					if (piece == pionalb)
 					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
-								{
-									for (i2 = 0; i2 < 8; i2++)
-										for (j2 = 0; j2 < 8; j2++)
-											T2[i][j] = T[i][j];
-									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-									if (depth == 1)
-									{
-										cscore = Eval(T2);
-										if (cscore > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cmaxscore = cscore;
-											}
-										if (cscore < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cminscore = cscore;
-											}
-									}
-									else
-									{
-										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-										if (cminscore2 > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cmaxscore = cminscore2;
-											}
-										if (cmaxscore2 < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cminscore = cmaxscore2;
-											}
-									}
-								}
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-
-				if (piece == damanegru||piece==damaalb)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
-						while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
-							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
-								{
-									for (i2 = 0; i2 < 8; i2++)
-										for (j2 = 0; j2 < 8; j2++)
-											T2[i][j] = T[i][j];
-									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-									if (depth == 1)
-									{
-										cscore = Eval(T2);
-										if (cscore > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cmaxscore = cscore;
-											}
-										if (cscore < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cminscore = cscore;
-											}
-									}
-									else
-									{
-										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-										if (cminscore2 > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cmaxscore = cminscore2;
-											}
-										if (cmaxscore2 < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cminscore = cmaxscore2;
-											}
-									}
-								}
-							vl += dl[dir];
-							vc += dc[dir];
-						}
-					}
-				}
-				if (piece == regenegru||piece== regealb)
-				{
-					for (dir = 0; dir < 8; dir++)
-					{
-						vl = i + dl[dir];
-						vc = j + dc[dir];
+						vl = i - 1;
+						vc = j - 1;
 						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
-						{
 							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								cscore = Eval(T2);
+								if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
+							}
+						vc = j + 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								cscore = Eval(T2);
+								if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
+							}
+						vl = i - 1;
+						vc = j;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								cscore = Eval(T2);
+								if (cscore > cmaxscore)
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cmaxscore = cscore;
+								}
+							}
+						vl = i - 2;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								cscore = Eval(T2);
+								if (cscore > cmaxscore)
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cmaxscore = cscore;
+								}
+							}
+					}
+
+					if (piece == calalb)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dcl[dir];
+							vc = j + dcc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+
 								{
 									for (i2 = 0; i2 < 8; i2++)
 										for (j2 = 0; j2 < 8; j2++)
-											T2[i][j] = T[i][j];
+											T2[i2][j2] = T[i2][j2];
+
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-									if (depth == 1)
+
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+								}
+						}
+					}
+
+					if (piece == nebunalb)
+					{
+						for (dir = 4; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == turnalb)
+					{
+						for (dir = 0; dir < 4; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == damaalb)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+					if (piece == regealb)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									cscore = Eval(T2);
+									if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									
+								}
+							}
+						}
+					}
+				}
+		}
+	}
+	if(depth > 1)
+	{
+		if (tomove == -1)
+		{
+			for (i = 0; i < 8; i++)
+				for (j = 0; j < 8; j++)
+				{
+					piece = T[i][j];
+					if (piece == pionnegru)
+					{
+						vl = i + 1;
+						vc = j - 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cmaxscore2 < cminscore)
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cminscore = cmaxscore2;
+								}
+							}
+						vc = j + 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cmaxscore2 < cminscore)
+
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cminscore = cmaxscore2;
+								}
+							}
+
+						vc = j;
+						vl = i + 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cmaxscore2 < cminscore)
+
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cminscore = cmaxscore2;
+								}
+							}
+						vl = i + 2;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cmaxscore2 < cminscore)
+
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cminscore = cmaxscore2;
+								}
+							}
+					}
+
+					if (piece == calnegru)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dcl[dir];
+							vc = j + dcc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cmaxscore2 < cminscore)
 									{
-										cscore = Eval(T2);
-										if (cscore > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cmaxscore = cscore;
-											}
-										if (cscore < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = i * 8 + j % 8;
-												best_move_sq2 = vl * 8 + vc % 8;
-												cminscore = cscore;
-											}
-									}
-									else
-									{
-										MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
-										if (cminscore2 > cmaxscore)
-											if (tomove == 1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cmaxscore = cminscore2;
-											}
-										if (cmaxscore2 < cminscore)
-											if (tomove == -1)
-											{
-												best_move_sq1 = csq1;
-												best_move_sq2 = csq2;
-												cminscore = cmaxscore2;
-											}
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cmaxscore2;
 									}
 								}
 						}
 					}
+
+					if (piece == nebunnegru)
+					{
+						for (dir = 4; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cmaxscore2 < cminscore)
+										if (tomove == -1)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cmaxscore2;
+										}
+
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == turnnegru)
+					{
+						for (dir = 0; dir < 4; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+
+									if (cmaxscore2 < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cmaxscore2;
+										}
+
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == damanegru)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+
+									if (cmaxscore2 < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cmaxscore2;
+										}
+
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+					if (piece == regenegru)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+
+									if (cmaxscore2 < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cmaxscore2;
+									}
+
+								}
+							}
+						}
+					}
 				}
-			}
+		}
+		if (tomove == 1)
+		{
+			for (i = 0; i < 8; i++)
+				for (j = 0; j < 8; j++)
+				{
+					piece = T[i][j];
+					if (piece == pionalb)
+					{
+						vl = i - 1;
+						vc = j - 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cminscore2 > cmaxscore)
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cmaxscore = cminscore2;
+								}
+							}
+						vc = j + 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cminscore2 > cmaxscore)
+
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cmaxscore = cminscore2;
+								}
+							}
+						vl = i - 1;
+						vc = j;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cminscore2 > cmaxscore)
+
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cmaxscore = cminscore2;
+								}
+							}
+						vl = i - 1;
+						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+							{
+								for (i2 = 0; i2 < 8; i2++)
+									for (j2 = 0; j2 < 8; j2++)
+										T2[i2][j2] = T[i2][j2];
+
+								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+								MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+								if (cminscore2 > cmaxscore)
+
+								{
+									best_move_sq1 = i * 8 + j % 8;
+									best_move_sq2 = vl * 8 + vc % 8;
+									cmaxscore = cminscore2;
+								}
+							}
+					}
+
+					if (piece == calalb)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dcl[dir];
+							vc = j + dcc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cminscore2;
+									}
+
+								}
+
+						}
+					}
+
+					if (piece == nebunalb)
+					{
+						for (dir = 4; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cminscore2;
+									}
+
+
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == turnalb)
+					{
+						for (dir = 0; dir < 4; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cminscore2;
+									}
+
+
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+
+					if (piece == damaalb)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							while (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cminscore2;
+									}
+
+
+								}
+								vl += dl[dir];
+								vc += dc[dir];
+							}
+						}
+					}
+					if (piece == regealb)
+					{
+						for (dir = 0; dir < 8; dir++)
+						{
+							vl = i + dl[dir];
+							vc = j + dc[dir];
+							if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
+							{
+								if (IsLegalMove(T, i * 8 + j % 8, vl * 8 + vc % 8))
+								{
+									for (i2 = 0; i2 < 8; i2++)
+										for (j2 = 0; j2 < 8; j2++)
+											T2[i2][j2] = T[i2][j2];
+
+									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+
+									MoveGenerator(T2, 0 - tomove, csq1, csq2, cminscore2, cmaxscore2, depth - 1);
+									if (cminscore2 > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cminscore2;
+									}
+								}
+							}
+						}
+					}
+				}
+		}
 	}
 	sq1 = best_move_sq1;
 	sq2 = best_move_sq2;
