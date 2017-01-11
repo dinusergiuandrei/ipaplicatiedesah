@@ -24,7 +24,9 @@ SDL_Window* gWindow = NULL;
 
 SDL_Renderer* gRenderer = NULL;
 
-SDL_Rect TableViewport;
+SDL_Rect TableViewport, Button1, Button2, Button3, Button4;
+
+SDL_Rect BackButton, UndoButton;
 
 SDL_Surface *screen;
 
@@ -119,6 +121,12 @@ LTexture Undo_Image;
 LTexture Albulacastigat_Image;
 LTexture Negrulacastigat_Image;
 LTexture Back_Image;
+LTexture SelectColor_Image;
+LTexture BackgroundComputerWhite;
+LTexture BackgroundComputerBlack;
+LTexture SelectDifficulty;
+LTexture SelectDifficultyComputer1;
+LTexture SelectDifficultyComputer2;
 SDL_Rect SQPort[64];
 SDL_Rect WindowPort;
 
@@ -212,17 +220,18 @@ bool init()
 
 void loadMedia()
 {
-	BackgroundTexture.loadFromFile("Images/bg_water.png");
-	Back_Image.loadFromFile("Images/back.png");
-	Main_Menu_Background.loadFromFile("Images/mainmenu.png");
-	Player_1_Image.loadFromFile("Images/player1.png");
-	Player_2_Image.loadFromFile("Images/player2.png");
-	Computer_Image.loadFromFile("Images/computer.png");
+	BackgroundTexture.loadFromFile("Images/brownbg.png");
+	Main_Menu_Background.loadFromFile("Images/brownmainmenu.png");
 	TableTexture.loadFromFile("Images/tabla.png");
-	
-	Undo_Image.loadFromFile("Images/undo.png");
+
 	Albulacastigat_Image.loadFromFile("Images/albulacastigat.png");
 	Negrulacastigat_Image.loadFromFile("Images/negrulacastigat.png");
+	SelectColor_Image.loadFromFile("Images/selectcolor.png");
+	BackgroundComputerWhite.loadFromFile("Images/brownbgvscomp.png");
+	BackgroundComputerBlack.loadFromFile("Images/brownbgvscomp2.png");
+	SelectDifficulty.loadFromFile("Images/selectdiff.png");
+	SelectDifficultyComputer1.loadFromFile("Images/selectdiff1.png");
+	SelectDifficultyComputer2.loadFromFile("Images/selectdiff2.png");
 
 	PieceTexture[pionalb].loadFromFile("Images/pionalb.png");
 	PieceTexture[calalb].loadFromFile("Images/calalb.png");
@@ -236,6 +245,7 @@ void loadMedia()
 	PieceTexture[turnnegru].loadFromFile("Images/turnnegru.png");
 	PieceTexture[damanegru].loadFromFile("Images/damanegru.png");
 	PieceTexture[regenegru].loadFromFile("Images/regenegru.png");
+
 }
 
 void close()
@@ -291,17 +301,6 @@ void Show_Black_Win()
 	CurrentPort.h = SQPort[0].h;
 	SDL_RenderSetViewport(gRenderer, &CurrentPort);
 	Negrulacastigat_Image.render(CurrentPort);
-}
-
-void Show_Undo()
-{
-	SDL_Rect CurrentPort;
-	CurrentPort.x = 508;
-	CurrentPort.y = 660;
-	CurrentPort.w = 140;
-	CurrentPort.h = 50;
-	SDL_RenderSetViewport(gRenderer, &CurrentPort);
-	Undo_Image.render(CurrentPort);
 }
 
 void Show_Piece(int piece, int SQ)
@@ -396,6 +395,16 @@ int move(int T[10][10], int sq1, int sq2)
 	}
 		put_piece(T, T[sq1 / 8][sq1 % 8], sq2);
 		T[sq1 / 8][sq1 % 8] = -1;
+	if(piece==pionalb)
+	{
+		if (l2 == 0)
+			T[l2][c2] = damaalb;
+	}
+	if(piece==pionnegru)
+	{
+		if (l2 == 7)
+			T[l2][c2] = damanegru;
+	}
 	return captured;
 }
 
@@ -1456,72 +1465,21 @@ void Set_SQ_Value_Black()
 		}
 }
 
-void Show_Player1()
-{
-	int i;
-	SDL_Rect Player1_Port;
-	Player1_Port.x = 720;
-	Player1_Port.y = 575;
-	Player1_Port.w = 280;
-	Player1_Port.h = 70;
-	SDL_RenderSetViewport(gRenderer, &Player1_Port);
-	Player_1_Image.render(Player1_Port);
-}
-
-void Show_Player2()
-{
-	int i;
-	SDL_Rect Player2_Port;
-	Player2_Port.x = 720;
-	Player2_Port.y = 72;
-	Player2_Port.w = 280;
-	Player2_Port.h = 70;
-	SDL_RenderSetViewport(gRenderer, &Player2_Port);
-	Player_2_Image.render(Player2_Port);
-}
-
-void Show_Computer()
-{
-	int i;
-	SDL_Rect Computer_Port;
-	Computer_Port.x = 720;
-	Computer_Port.y = 72;
-	Computer_Port.w = 280;
-	Computer_Port.h = 70;
-	SDL_RenderSetViewport(gRenderer, &Computer_Port);
-	Computer_Image.render(Computer_Port);
-}
-
-void Show_Back()
-{
-	int i;
-	SDL_Rect Back_Port;
-	Back_Port.x = 72;
-	Back_Port.y = 660;
-	Back_Port.w = 140;
-	Back_Port.h = 50;
-	SDL_RenderSetViewport(gRenderer, &Back_Port);
-	Back_Image.render(Back_Port);
-}
-
 void vsPlayer()
 {
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
-	Show_Undo();
 	Partida *InitialPosition = new Partida;
 	Partida *LastPosition = new Partida ;
 	Init_Table(InitialPosition->CurrentTable);
 	InitialPosition->prec = NULL;
 	InitialPosition->tomove = 1;
 	Show_Table(InitialPosition->CurrentTable);
-	Show_Player1();
-	Show_Player2();
-	Show_Back();
 	Partida *CurrentPosition = new Partida;
 	CurrentPosition = InitialPosition;
-	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece;
+	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, movecount=0;
+	int T[300][10][10];
 	bool quit = false;
 	SDL_Event e;
 	LastPosition = InitialPosition;
@@ -1534,6 +1492,7 @@ void vsPlayer()
 			{
 				quit = true;
 			}
+			
 			if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
 				sq1 = -1;
@@ -1541,12 +1500,12 @@ void vsPlayer()
 				int x, y;
 				SDL_GetMouseState(&x, &y);
 				int inside;
-				if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+				if (x > SQPort[0].x&&x < SQPort[63].x + SQPort[63].w&&y > SQPort[0].y&&y < SQPort[63].y + SQPort[63].h)
 					inside = 1;
 				else inside = 0;
 				if (inside)
 					for (i = 0; i < 64; i++)
-						if (x >= SQPort[i].x&&x <= SQPort[i].x + SQPort[i].w&&y >= SQPort[i].y&&y <= SQPort[i].y + SQPort[i].h)
+						if (x >= SQPort[i].x&&x < SQPort[i].x + SQPort[i].w&&y > SQPort[i].y&&y < SQPort[i].y + SQPort[i].h)
 						{
 							sq1 = i;
 							if (CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] != -1)
@@ -1568,36 +1527,14 @@ void vsPlayer()
 								if (inside)
 									for (j = 0; j < 64; j++)
 									{
-										if (x >= SQPort[j].x&&x <= SQPort[j].x + SQPort[j].w&&y >= SQPort[j].y&&y <= SQPort[j].y + SQPort[j].h)
+										if (x > SQPort[j].x&&x < SQPort[j].x + SQPort[j].w&&y > SQPort[j].y&&y < SQPort[j].y + SQPort[j].h)
 										{
 											sq2 = j;
-
-											CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] = piece;
-											if (tomove == 1)
-												if (piece >= pionalb&&piece <= regealb && IsLegalMove(CurrentPosition->CurrentTable, sq1, sq2))
-												{
-													LastPosition = CurrentPosition;
-													Copie_Tabla(LastPosition->CurrentTable, CurrentPosition->CurrentTable);
-
-													CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] = piece;
-													CurrentPosition->sq1 = sq1;
-													CurrentPosition->sq2 = sq2;
-													CurrentPosition->tomove = tomove;
-													Partida *AuxPosition = new Partida;
-													AuxPosition = CurrentPosition; //pozitia dupa de mutare
-													AuxPosition->prec = CurrentPosition;
-													CurrentPosition->urm = AuxPosition;
-													move(AuxPosition->CurrentTable, sq1, sq2);
-													CurrentPosition = AuxPosition;
-													
-													Show_Table(CurrentPosition->CurrentTable);
-													tomove = 0 - tomove;
-												}
-												else;
-
-											else
-												if (tomove == -1)
-													if (IsLegalMove(CurrentPosition->CurrentTable, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+											if (sq2 != sq1)
+											{
+												CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] = piece;
+												if (tomove == 1)
+													if (piece >= pionalb&&piece <= regealb && IsLegalMove(CurrentPosition->CurrentTable, sq1, sq2))
 													{
 														LastPosition = CurrentPosition;
 														Copie_Tabla(LastPosition->CurrentTable, CurrentPosition->CurrentTable);
@@ -1612,11 +1549,101 @@ void vsPlayer()
 														CurrentPosition->urm = AuxPosition;
 														move(AuxPosition->CurrentTable, sq1, sq2);
 														CurrentPosition = AuxPosition;
+
 														Show_Table(CurrentPosition->CurrentTable);
 														tomove = 0 - tomove;
 													}
 													else;
-													if (ismate(CurrentPosition->CurrentTable, tomove))
+
+												else
+													if (tomove == -1)
+														if (IsLegalMove(CurrentPosition->CurrentTable, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+														{
+															LastPosition = CurrentPosition;
+															Copie_Tabla(LastPosition->CurrentTable, CurrentPosition->CurrentTable);
+
+															CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] = piece;
+															CurrentPosition->sq1 = sq1;
+															CurrentPosition->sq2 = sq2;
+															CurrentPosition->tomove = tomove;
+															Partida *AuxPosition = new Partida;
+															AuxPosition = CurrentPosition; //pozitia dupa de mutare
+															AuxPosition->prec = CurrentPosition;
+															CurrentPosition->urm = AuxPosition;
+															move(AuxPosition->CurrentTable, sq1, sq2);
+															CurrentPosition = AuxPosition;
+															Show_Table(CurrentPosition->CurrentTable);
+															tomove = 0 - tomove;
+														}
+														else;
+
+											}
+											else
+											{
+												SDL_PollEvent(&e);
+												while (e.type != SDL_MOUSEBUTTONDOWN)
+												{
+													SDL_PollEvent(&e);
+												}
+												SDL_GetMouseState(&x, &y);
+												if (x > SQPort[0].x&&x < SQPort[63].x + SQPort[63].w&&y > SQPort[0].y&&y < SQPort[63].y + SQPort[63].h)
+													inside = 1;
+												else inside = 0;
+												if (inside)
+													for (j = 0; j < 64; j++)
+													{
+														if (x > SQPort[j].x&&x < SQPort[j].x + SQPort[j].w&&y > SQPort[j].y&&y < SQPort[j].y + SQPort[j].h)
+														{
+															sq2 = j;
+															if (tomove == 1)
+																if (piece >= pionalb&&piece <= regealb && IsLegalMove(CurrentPosition->CurrentTable, sq1, sq2))
+																{
+																	LastPosition = CurrentPosition;
+																	Copie_Tabla(LastPosition->CurrentTable, CurrentPosition->CurrentTable);
+
+																	CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] = piece;
+																	CurrentPosition->sq1 = sq1;
+																	CurrentPosition->sq2 = sq2;
+																	CurrentPosition->tomove = tomove;
+																	Partida *AuxPosition = new Partida;
+																	AuxPosition = CurrentPosition; //pozitia dupa de mutare
+																	AuxPosition->prec = CurrentPosition;
+																	CurrentPosition->urm = AuxPosition;
+																	move(AuxPosition->CurrentTable, sq1, sq2);
+																	CurrentPosition = AuxPosition;
+
+																	Show_Table(CurrentPosition->CurrentTable);
+																	tomove = 0 - tomove;
+																}
+																else;
+
+															else
+																if (tomove == -1)
+																	if (IsLegalMove(CurrentPosition->CurrentTable, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+																	{
+																		LastPosition = CurrentPosition;
+																		Copie_Tabla(LastPosition->CurrentTable, CurrentPosition->CurrentTable);
+
+																		CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] = piece;
+																		CurrentPosition->sq1 = sq1;
+																		CurrentPosition->sq2 = sq2;
+																		CurrentPosition->tomove = tomove;
+																		Partida *AuxPosition = new Partida;
+																		AuxPosition = CurrentPosition; //pozitia dupa de mutare
+																		AuxPosition->prec = CurrentPosition;
+																		CurrentPosition->urm = AuxPosition;
+																		move(AuxPosition->CurrentTable, sq1, sq2);
+																		CurrentPosition = AuxPosition;
+																		Show_Table(CurrentPosition->CurrentTable);
+																		tomove = 0 - tomove;
+																	}
+														}
+													}
+											}
+
+
+
+											if (ismate(CurrentPosition->CurrentTable, tomove))
 													{
 														quit = 1;
 														cout << 0 - tomove << " wins\n";
@@ -1638,11 +1665,7 @@ void vsPlayer()
 						else;
 				else
 				{
-					/*Back_Port.x = 72;
-					Back_Port.y = 660;
-					Back_Port.w = 140;
-					Back_Port.h = 50;
-					*/
+					
 					if (x >= 72 && x <= 72 + 140 && y >= 660 && y <= 660 + 50)
 					{
 						quit = 1;
@@ -1667,6 +1690,7 @@ void vsPlayer()
 		}
 
 	}
+	
 }
 
 
@@ -1677,24 +1701,133 @@ void Show_Main_Menu()
 
 }
 
+void SetButtonPort()
+{
+	Button1.x = 388;
+	Button1.y = 252;
+	Button1.h = 70;
+	Button1.w = 305;
+	
+	Button2.x = 388;
+	Button2.y = 365;
+	Button2.h = 70;
+	Button2.w = 305;
+	
+	Button3.x = 388;
+	Button3.y = 480;
+	Button3.h = 70;
+	Button3.w = 305;
+	
+	Button4.x = 480;
+	Button4.y = 605;
+	Button4.h = 25;
+	Button4.w = 120;
+
+	BackButton.x = 72;
+	BackButton.y = 645; //
+	BackButton.h = 32; //
+	BackButton.w = 90;
+
+	UndoButton.x = 294;
+	UndoButton.y = 645;
+	UndoButton.h = 30;
+	UndoButton.w = 134;
+}
+
+int IsInButton()
+{
+	int x, y;
+	SDL_GetMouseState(&x, &y);
+	if (x > Button1.x&&x<Button1.x + Button1.w&&y>Button1.y&&y < Button1.y + Button1.h)
+		return 1;
+	if (x > Button2.x&&x<Button2.x + Button2.w&&y>Button2.y&&y < Button2.y + Button2.h)
+		return 2;
+	if (x > Button3.x&&x<Button3.x + Button3.w&&y>Button3.y&&y < Button3.y + Button3.h)
+		return 3;
+	if (x > Button4.x&&x<Button4.x + Button4.w&&y>Button4.y&&y < Button4.y + Button4.h)
+		return 4;
+	return 0;
+}
+
+
+int SelectDifficultyF()
+{
+	int option=-1, quit=0;
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	SelectDifficulty.render(WindowPort);
+	SDL_Event e;
+	while(!quit)
+	{
+		while(SDL_PollEvent(&e)!=0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				option = IsInButton();
+				if (option > 0)
+					quit = 1;
+			}
+		}
+		if (option == 4)
+			MainMenu();
+		else
+			return option;
+	}
+}
+
+int SelectColor()
+{
+	int option = -1, quit = 0;
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	SelectColor_Image.render(WindowPort);
+	SDL_Event e;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				option = IsInButton();  
+				if (option == 1 || option == 2 || option == 4 )
+					quit = 1;
+					
+			}
+		}
+	}
+	if (option == 1)
+		return 1;
+	if (option == 2)
+		return -1;
+	if (option == 4)
+		MainMenu();
+	return 0;
+
+}
+
 void vsComputer()
 {
+	int depth = SelectDifficultyF();
+	int player_color = SelectColor();
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
 	Init_Table(Table);
 	Show_Table(Table);
-	Show_Player1();
-	Show_Computer();
-	Show_Back();
 
 	char sir[5];
-	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, depth = 2, player_colour = 1, minscore, maxscore;
+	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, minscore, maxscore;
 	bool quit = false;
 	SDL_Event e;
 	while (!quit)
 	{
-		if (tomove == player_colour)
+		if (tomove == player_color)
 		{
 			while (SDL_PollEvent(&e) != 0)
 			{
@@ -1770,11 +1903,7 @@ void vsComputer()
 							else;
 					else
 					{
-						/*Back_Port.x = 72;
-						Back_Port.y = 660;
-						Back_Port.w = 140;
-						Back_Port.h = 50;
-						*/
+						
 						if (x >= 72 && x <= 72 + 140 && y >= 660 && y <= 660 + 50)
 						{
 							quit = 1;
@@ -1790,14 +1919,13 @@ void vsComputer()
 			if (ismate(Table, tomove))
 			{
 				quit = 1;
-				cout << 0 - tomove << " wins\n";
 				if (tomove == 1)
 					Show_Black_Win();
 				if (tomove == -1)
 					Show_White_Win();
 				SDL_Delay(3000);
 
-				//Show window "-tomove wins" 
+
 				MainMenu();
 
 			}
@@ -1806,24 +1934,19 @@ void vsComputer()
 		else
 		{
 			//make computer move
-			sq1 = 2;
-			sq2 = 5;
+
 			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 2);
-			cout << sq1 << " to " << sq2 << "\n";
 			move(Table, sq1, sq2);
 			Show_Table(Table);
 			tomove = 0 - tomove;
 			if (ismate(Table, tomove))
 			{
 				quit = 1;
-				cout << 0 - tomove << " wins\n";
 				if (tomove == -1)
 					Show_Black_Win();
 				if (tomove == 1)
 					Show_White_Win();
 				SDL_Delay(5000);
-
-				//Show window "-tomove wins" 
 				MainMenu();
 
 			}
@@ -2821,133 +2944,27 @@ int Eval(int T[10][10])
 	return score;
 }
 
-void Test()
+void DemoMode()
 {
 	SDL_RenderClear(gRenderer);
 	Show_Background();
 	Show_Board();
 	Init_Table(Table);
 	Show_Table(Table);
-	Show_Player1();
-	Show_Computer();
-	Show_Back();
 
 	char sir[5];
-	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, depth = 2, player_colour = 1, minscore, maxscore;
+	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, depth = 2, minscore, maxscore;
 	bool quit = false;
 	SDL_Event e;
 	while (!quit)
 	{
-		if (tomove == player_colour)
+		while (SDL_PollEvent(&e) != 0)
 		{
-			while (SDL_PollEvent(&e) != 0)
+			if (e.type == SDL_QUIT)
 			{
-				if (e.type == SDL_QUIT)
-				{
-					quit = true;
-				}
-				if (e.type == SDL_MOUSEBUTTONDOWN)
-				{
-					sq1 = -1;
-					sq2 = -1;
-					int x, y;
-					SDL_GetMouseState(&x, &y);
-					int inside;
-					if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
-						inside = 1;
-					else inside = 0;
-					if (inside)
-						for (i = 0; i < 64; i++)
-							if (x >= SQPort[i].x&&x <= SQPort[i].x + SQPort[i].w&&y >= SQPort[i].y&&y <= SQPort[i].y + SQPort[i].h)
-							{
-								sq1 = i;
-								if (Table[sq1 / 8][sq1 % 8] != -1)
-								{
-									piece = Table[sq1 / 8][sq1 % 8];
-
-									Show_Table(Table);
-
-									SDL_PollEvent(&e);
-									while (e.type != SDL_MOUSEBUTTONUP)
-									{
-										SDL_PollEvent(&e);
-									}
-									SDL_GetMouseState(&x, &y);
-									if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
-										inside = 1;
-									else inside = 0;
-									if (inside)
-										for (j = 0; j < 64; j++)
-										{
-											if (x >= SQPort[j].x&&x <= SQPort[j].x + SQPort[j].w&&y >= SQPort[j].y&&y <= SQPort[j].y + SQPort[j].h)
-											{
-												sq2 = j;
-
-												Table[sq1 / 8][sq1 % 8] = piece;
-												if (tomove == 1)
-													if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
-													{
-														Table[sq1 / 8][sq1 % 8] = piece;
-														move(Table, sq1, sq2);
-														Show_Table(Table);
-														tomove = 0 - tomove;
-													}
-													else;
-
-												else
-													if (tomove == 0)
-														if (IsLegalMove(Table, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
-														{
-															Table[sq1 / 8][sq1 % 8] = piece;
-															move(Table, sq1, sq2);
-															Show_Table(Table);
-															tomove = 0 - tomove;
-														}
-														else;
-
-
-														//
-											}
-										}
-								}
-							}
-							else;
-					else
-					{
-						/*Back_Port.x = 72;
-						Back_Port.y = 660;
-						Back_Port.w = 140;
-						Back_Port.h = 50;
-						*/
-						if (x >= 72 && x <= 72 + 140 && y >= 660 && y <= 660 + 50)
-						{
-							quit = 1;
-							MainMenu();
-							quit = 1;
-						}
-					}
-
-
-				}
-
+				quit = true;
 			}
-			if (ismate(Table, tomove))
-			{
-				quit = 1;
-				cout << 0 - tomove << " wins\n";
-				SDL_Delay(3000);
-
-				//Show window "-tomove wins" 
-				MainMenu();
-
-			}
-
 		}
-		else
-		{
-			//make computer move
-			sq1 = 2;
-			sq2 = 5;
 			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 2);
 			cout << sq1 << " to " << sq2 << "\n";
 			move(Table, sq1, sq2);
@@ -2957,13 +2974,15 @@ void Test()
 			{
 				quit = 1;
 				cout << 0 - tomove << " wins\n";
-				SDL_Delay(3000);
-
-				//Show window "-tomove wins" 
+				if (tomove == -1)
+					Show_Black_Win();
+				if (tomove == 1)
+					Show_White_Win();
+				SDL_Delay(5000);
 				MainMenu();
 
 			}
-		}
+			
 	}
 }
 
@@ -2972,26 +2991,12 @@ void MainMenu()
 	SDL_Event e;
 	Show_Main_Menu();
 
+
 	int option = -1;
-	bool quit = false;
-	SDL_Rect zona1, zona2, zona3;
-
-	zona1.x = 380;
-	zona1.y = 254;
-	zona1.h = 89;
-	zona1.w = 306;
-
-	zona2.x = 380;
-	zona2.y = 377;
-	zona2.h = 89;
-	zona2.w = 306;
-
-	zona3.x = 380;
-	zona3.y = 501;
-	zona3.h = 89;
-	zona3.w = 306;
-
-	while ((!quit) && (option == -1))
+	bool quit = 0;
+	
+	
+	while (!quit)
 	{
 		while (SDL_PollEvent(&e) != 0)
 		{
@@ -3000,17 +3005,11 @@ void MainMenu()
 				quit = true;
 			}
 
-			if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP)
+			if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
-				int x, y;
-				SDL_GetMouseState(&x, &y);
-
-				if ((x >= zona3.x&&x <= zona3.x + zona3.w) && (y >= zona3.y&&y <= zona3.y + zona3.h))
-					quit = true;
-				if ((x >= zona1.x&&x <= zona1.x + zona1.w) && (y >= zona1.y&&y <= zona1.y + zona1.h))
-					option = 1;
-				if ((x >= zona2.x&&x <= zona2.x + zona2.w) && (y >= zona2.y&&y <= zona2.y + zona2.h))
-					option = 2;
+				option = IsInButton();
+				if (option > 0)
+					quit = 1;
 			}
 		}
 	}
@@ -3018,12 +3017,15 @@ void MainMenu()
 		vsPlayer();
 	if (option == 2)
 		vsComputer();
-
+	if (option == 3)
+		DemoMode();
+	
 }
 
 int main(int argc, char* args[])
 {
 	init();
+	SetButtonPort();
 	Set_Piece_Value();
 	Set_SQ_Value_Black();
 	setSQPort();
@@ -3032,8 +3034,10 @@ int main(int argc, char* args[])
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	SDL_RenderClear(gRenderer);
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
-
+	
 	MainMenu();
+
+	
 	close();
 
 	return 0;
