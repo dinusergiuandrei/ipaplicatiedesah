@@ -12,7 +12,7 @@ https://www.atlassian.com/git/tutorials/
 #include <iostream>
 #include <SDL.h>
 #include <SDL_image.h>
-
+#include "SDL_mixer.h"
 #include <stdio.h>
 #include <string>
 
@@ -130,13 +130,26 @@ LTexture SelectDifficultyComputer2;
 SDL_Rect SQPort[64];
 SDL_Rect WindowPort;
 
-
+Mix_Chunk *MoveSound = NULL;
+Mix_Chunk *NEWGAME = NULL;
+Mix_Chunk *CAPHIT1 = NULL;
+Mix_Chunk *CAPHIT2 = NULL;
+Mix_Chunk *CAPHIT3 = NULL;
+Mix_Chunk *CAPTURE = NULL;
+Mix_Chunk *CAPTURE2 = NULL;
+Mix_Chunk *CAPTURE3 = NULL;
+Mix_Chunk *MOVE2 = NULL;
+Mix_Chunk *MOVE3 = NULL;
+Mix_Chunk *MOVE4 = NULL;
+Mix_Chunk *Tick = NULL;
 
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
 int Table[10][10], WhiteControl[10][10], BlackControl[10][10];
 int SQ_Value_White[64] = { 1,1,1,1,1,1,1,1, 2,1,2,2,2,2,2,2, 1,1,3,3,3,3,1,1, 1,2,3,3,3,3,2,1, 1,1,2,2,2,2,1,1, 1,1,1,1,1,1,1,1, 0, 0, 0, 0, 0, 0, 0, 0 };
+int Line_Value_White[10] = { 1, 3, 2, 1, 1, 1, 1, 0, 0, 0 };
+int Line_Value_Black[10] = { 0, -1, -1, -1, -1, -2, -3, -1, 0, 0 };
 int Piece_Value[20], SQ_Value_Black[64];
 int dl[8] = { -1, 0, 1, 0, -1, 1, 1, -1 };
 int dc[8] = { 0, 1, 0, -1, 1, 1, -1, -1 };
@@ -208,6 +221,12 @@ bool init()
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+	{
+		printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+		success = false;
+	}
+
 	int imgFlags = IMG_INIT_PNG;
 	IMG_Init(imgFlags);
 
@@ -220,6 +239,19 @@ bool init()
 
 void loadMedia()
 {
+	MoveSound = Mix_LoadWAV("Sounds/MoveSound.wav");
+	CAPHIT1= Mix_LoadWAV("Sounds/CAPHIT1.wav");
+	CAPHIT2= Mix_LoadWAV("Sounds/CAPHIT2.wav");
+	CAPHIT3= Mix_LoadWAV("Sounds/CAPHIT3.wav");
+	CAPTURE= Mix_LoadWAV("Sounds/CAPTURE.wav");
+	CAPTURE2= Mix_LoadWAV("Sounds/CAPTURE2.wav");
+	CAPTURE3= Mix_LoadWAV("Sounds/CAPTURE3.wav");
+	MOVE2= Mix_LoadWAV("Sounds/MOVE2.wav");
+	MOVE3= Mix_LoadWAV("Sounds/MOVE3.wav");
+	MOVE4= Mix_LoadWAV("Sounds/MOVE4.wav");
+	NEWGAME= Mix_LoadWAV("Sounds/NEWGAME.wav");
+	Tick= Mix_LoadWAV("Sounds/Tick.wav");
+
 	BackgroundTexture.loadFromFile("Images/brownbg.png");
 	Main_Menu_Background.loadFromFile("Images/brownmainmenu.png");
 	TableTexture.loadFromFile("Images/tabla.png");
@@ -255,7 +287,8 @@ void close()
 	SDL_DestroyWindow(gWindow);
 	gWindow = NULL;
 	gRenderer = NULL;
-
+	Mix_FreeChunk(MoveSound);
+	MoveSound = NULL;
 	IMG_Quit();
 	SDL_Quit();
 }
@@ -342,74 +375,113 @@ int move(int T[10][10], int sq1, int sq2)
 	c1 = sq1 % 8;
 	l2 = sq2 / 8;
 	c2 = sq2 % 8;
-	piece = T[l1][c1];
-	if (T[l1][c1] == regealb && l1==7)
-		if (c2-c1 == 2)
-		{
-			T[7][7] = -1;
-			T[7][5] = turnalb;
-		}
-		else
-			if (sq1 % 8 - sq2 % 8 == 2)
-			{
-				T[7][0] = -1;
-				T[7][3] = turnalb;
-			}
-	if (T[sq1 / 8][sq1 % 8] == regenegru&&l1==0)
-		if (sq2 % 8 - sq1 % 8 == 2)
-		{
-			T[0][7] = -1;
-			T[0][5] = turnnegru;
-		}
-		else
-			if (sq1 % 8 - sq2 % 8 == 2)
-			{
-				T[0][0] = -1;
-				T[0][3] = turnnegru;
-			}
-	captured = T[sq2 / 8][sq2 % 8];
-	
-	int enpassant = 0;
-	if (piece == pionalb)
+	if (l1 >= 0 && l1 < 8 && c1 >= 0 && c1 < 8 && l2 >= 0 && l2 < 8 && c2 >= 0 && c2 < 8)
+		if(sq1!=sq2)
 	{
-		if (c2 != c1)
-			if (T[l2][c2] == -1)
-			{
-				T[l2 + 1][c2] = -1;
-				enpassant = 1;
-			}
-		if (l2 == 0)
-			T[l2][c2] = damaalb;
-	}
+		
 
-	if (piece == pionnegru)
-	{
-		if (c2 != c1)
-			if (T[l2][c2] == -1)
+		piece = T[l1][c1];
+		captured = T[l2][c2];
+		
+		if (T[l1][c1] == regealb && l1 == 7)
+			if (c2 - c1 == 2)
 			{
-				enpassant = 1;
-				T[l2 - 1][c2] = -1;
+				T[7][7] = -1;
+				T[7][5] = turnalb;
 			}
-		if (l2 == 7)
-			T[l2][c2] = damanegru;
-	}
+			else
+				if (sq1 % 8 - sq2 % 8 == 2)
+				{
+					T[7][0] = -1;
+					T[7][3] = turnalb;
+				}
+		if (T[sq1 / 8][sq1 % 8] == regenegru&&l1 == 0)
+			if (sq2 % 8 - sq1 % 8 == 2)
+			{
+				T[0][7] = -1;
+				T[0][5] = turnnegru;
+			}
+			else
+				if (sq1 % 8 - sq2 % 8 == 2)
+				{
+					T[0][0] = -1;
+					T[0][3] = turnnegru;
+				}
+		captured = T[sq2 / 8][sq2 % 8];
+
+		int enpassant = 0;
+		if (piece == pionalb)
+		{
+			if (c2 != c1)
+				if (T[l2][c2] == -1)
+				{
+					T[l2 + 1][c2] = -1;
+					enpassant = 1;
+				}
+			if (l2 == 0)
+				T[l2][c2] = damaalb;
+		}
+
+		if (piece == pionnegru)
+		{
+			if (c2 != c1)
+				if (T[l2][c2] == -1)
+				{
+					enpassant = 1;
+					T[l2 - 1][c2] = -1;
+				}
+			if (l2 == 7)
+				T[l2][c2] = damanegru;
+		}
 		put_piece(T, T[sq1 / 8][sq1 % 8], sq2);
 		T[sq1 / 8][sq1 % 8] = -1;
-	if(piece==pionalb)
-	{
-		if (l2 == 0)
-			T[l2][c2] = damaalb;
+		if (piece == pionalb)
+		{
+			if (l2 == 0)
+				T[l2][c2] = damaalb;
+		}
+		if (piece == pionnegru)
+		{
+			if (l2 == 7)
+				T[l2][c2] = damanegru;
+		}
+		return captured;
 	}
-	if(piece==pionnegru)
+	return 0;
+}
+
+void makemove(int T[10][10], int sq1, int sq2)
+{
+	int captured, piece;
+	captured = T[sq2 / 8][sq2 % 8];
+	piece = T[sq1 / 8][sq1 % 8];
+	move(T, sq1, sq2);
+
+	if (captured == -1)
 	{
-		if (l2 == 7)
-			T[l2][c2] = damanegru;
+		if (piece % 4 == 0)
+			Mix_PlayChannel(-1, MoveSound, 0);
+		if (piece % 4 == 1)
+			Mix_PlayChannel(-1, MOVE2, 0);
+		if (piece % 4 == 2)
+			Mix_PlayChannel(-1, MOVE3, 0);
+		if (piece % 4 == 3)
+			Mix_PlayChannel(-1, MOVE4, 0);
 	}
-	return captured;
+	else
+	{
+		if (piece % 3 == 0)
+			Mix_PlayChannel(-1, CAPTURE, 0);
+		if (piece % 3 == 1)
+			Mix_PlayChannel(-1, CAPTURE2, 0);
+		if (piece % 3 == 2)
+			Mix_PlayChannel(-1, CAPTURE3, 0);
+	}
 }
 
 void Init_Table(int T[10][10])
 {
+	Mix_PlayChannel(-1, NEWGAME, 0);
 	int i;
 	for (i = A8; i <= H1; i++)
 		T[i / 8][i % 8] = -1;
@@ -692,6 +764,8 @@ bool IsValidMove(int T[10][10], int sq1, int sq2)
 	if (piece == regealb || piece == regenegru)
 	{
 		if (!(LineDifference == 0 || ColumnDifference == 0 || LineDifference == ColumnDifference))
+			return false;
+		if (LineDifference > 1)
 			return false;
 		if (ColumnDifference == 2 || ColumnDifference == 3)
 		{
@@ -1478,7 +1552,8 @@ void vsPlayer()
 	Show_Table(InitialPosition->CurrentTable);
 	Partida *CurrentPosition = new Partida;
 	CurrentPosition = InitialPosition;
-	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, movecount=0;
+	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, movecount = 0, k1, k2, undolastmove = 0;
+	int exitomainmenu = 0;
 	int T[300][10][10];
 	bool quit = false;
 	SDL_Event e;
@@ -1547,7 +1622,13 @@ void vsPlayer()
 														AuxPosition = CurrentPosition; //pozitia dupa de mutare
 														AuxPosition->prec = CurrentPosition;
 														CurrentPosition->urm = AuxPosition;
-														move(AuxPosition->CurrentTable, sq1, sq2);
+
+														for (k1 = 0; k1 < 64; k1++)
+															for (k2 = 0; k2 < 64; k2++)
+																T[movecount][k1][k2] = AuxPosition->CurrentTable[k1][k2];
+														movecount++;
+														undolastmove = 0;
+														makemove(AuxPosition->CurrentTable, sq1, sq2);
 														CurrentPosition = AuxPosition;
 
 														Show_Table(CurrentPosition->CurrentTable);
@@ -1570,7 +1651,13 @@ void vsPlayer()
 															AuxPosition = CurrentPosition; //pozitia dupa de mutare
 															AuxPosition->prec = CurrentPosition;
 															CurrentPosition->urm = AuxPosition;
-															move(AuxPosition->CurrentTable, sq1, sq2);
+															for (k1 = 0; k1 < 64; k1++)
+																for (k2 = 0; k2 < 64; k2++)
+																	T[movecount][k1][k2] = AuxPosition->CurrentTable[k1][k2];
+															movecount++;
+															undolastmove = 0;
+
+															makemove(AuxPosition->CurrentTable, sq1, sq2);
 															CurrentPosition = AuxPosition;
 															Show_Table(CurrentPosition->CurrentTable);
 															tomove = 0 - tomove;
@@ -1609,7 +1696,13 @@ void vsPlayer()
 																	AuxPosition = CurrentPosition; //pozitia dupa de mutare
 																	AuxPosition->prec = CurrentPosition;
 																	CurrentPosition->urm = AuxPosition;
-																	move(AuxPosition->CurrentTable, sq1, sq2);
+																	for (k1 = 0; k1 < 64; k1++)
+																		for (k2 = 0; k2 < 64; k2++)
+																			T[movecount][k1][k2] = AuxPosition->CurrentTable[k1][k2];
+																	movecount++;
+																	undolastmove = 0;
+
+																	makemove(AuxPosition->CurrentTable, sq1, sq2);
 																	CurrentPosition = AuxPosition;
 
 																	Show_Table(CurrentPosition->CurrentTable);
@@ -1629,16 +1722,56 @@ void vsPlayer()
 																		CurrentPosition->sq2 = sq2;
 																		CurrentPosition->tomove = tomove;
 																		Partida *AuxPosition = new Partida;
-																		AuxPosition = CurrentPosition; //pozitia dupa de mutare
+																		AuxPosition = CurrentPosition; 
 																		AuxPosition->prec = CurrentPosition;
-																		CurrentPosition->urm = AuxPosition;
-																		move(AuxPosition->CurrentTable, sq1, sq2);
+																		CurrentPosition->urm = AuxPosition; for (k1 = 0; k1 < 64; k1++)
+																			for (k2 = 0; k2 < 64; k2++)
+																				T[movecount][k1][k2] = AuxPosition->CurrentTable[k1][k2];
+																		movecount++;
+																		undolastmove = 0;
+
+																		makemove(AuxPosition->CurrentTable, sq1, sq2);
 																		CurrentPosition = AuxPosition;
 																		Show_Table(CurrentPosition->CurrentTable);
 																		tomove = 0 - tomove;
 																	}
 														}
 													}
+												else
+												{
+
+													if (x >= BackButton.x && x <= BackButton.x + BackButton.w && y >= BackButton.y && y <= BackButton.y + BackButton.h)
+													{
+														quit = 1;
+														exitomainmenu = 1;
+														quit = 1;
+														break;
+													}
+
+													if (x >= UndoButton.x && x <= UndoButton.x + UndoButton.w && y >= UndoButton.y && y <= UndoButton.y + UndoButton.h)
+													{
+														movecount--;
+														if (movecount < 0)
+															movecount = 0;
+														else
+															if(!undolastmove)
+														{
+															for (k1 = 0; k1 < 64; k1++)
+																for (k2 = 0; k2 < 64; k2++)
+																	CurrentPosition->CurrentTable[k1][k2] = T[movecount][k1][k2];
+															tomove = 0 - tomove;
+															undolastmove = 1;
+
+														}
+														
+
+
+														Show_Table(CurrentPosition->CurrentTable);
+													}
+													// undo
+
+
+												}
 											}
 
 
@@ -1653,30 +1786,80 @@ void vsPlayer()
 														if (tomove == -1)
 															Show_White_Win();
 														SDL_Delay(5000);
-														MainMenu();
+														exitomainmenu = 1;
+														break;
 
 													}
 
 													//
 										}
 									}
+								else
+								{
+
+									if (x >= BackButton.x && x <= BackButton.x + BackButton.w && y >= BackButton.y && y <= BackButton.y + BackButton.h)
+									{
+										quit = 1;
+										exitomainmenu = 1;
+
+										quit = 1;
+										break;
+									}
+
+									if (x >= UndoButton.x && x <= UndoButton.x + UndoButton.w && y >= UndoButton.y && y <= UndoButton.y + UndoButton.h)
+									{
+										movecount--;
+										if (movecount < 0)
+											movecount = 0;
+										else
+											if(!undolastmove)
+										{
+											tomove = 0 - tomove;
+											undolastmove = 1;
+
+											for (k1 = 0; k1 < 64; k1++)
+												for (k2 = 0; k2 < 64; k2++)
+													CurrentPosition->CurrentTable[k1][k2] = T[movecount][k1][k2];
+										}
+
+
+										Show_Table(CurrentPosition->CurrentTable);
+									}
+									// undo
+
+
+								}
 							}
 						}
 						else;
 				else
 				{
 					
-					if (x >= 72 && x <= 72 + 140 && y >= 660 && y <= 660 + 50)
+					if (x >=BackButton.x && x <= BackButton.x + BackButton.w && y >= BackButton.y && y <= BackButton.y + BackButton.h)
 					{
 						quit = 1;
-						MainMenu();
+						exitomainmenu = 1;
+
+						break;
 						quit = 1;
 					}
 
-					if (x >= 508 && x <= 508 + 140 && y >= 660 && y <= 660 + 50)
+					if (x >= UndoButton.x && x <= UndoButton.x + UndoButton.w && y >= UndoButton.y && y <= UndoButton.y + UndoButton.h)
 					{
-						CurrentPosition = LastPosition;
-						Copie_Tabla(CurrentPosition->CurrentTable, LastPosition->CurrentTable);
+						movecount--;
+						if (movecount < 0)
+							movecount = 0;
+						else
+							if(!undolastmove)
+						{
+							for (k1 = 0; k1 < 64; k1++)
+								for (k2 = 0; k2 < 64; k2++)
+									CurrentPosition->CurrentTable[k1][k2] = T[movecount][k1][k2];
+							tomove = 0 - tomove;
+							undolastmove = 1;
+
+						}
+
 
 						Show_Table(CurrentPosition->CurrentTable);
 					}
@@ -1690,7 +1873,9 @@ void vsPlayer()
 		}
 
 	}
-	
+	exitomainmenu = 1;
+	if (exitomainmenu == 1)
+		MainMenu();
 }
 
 
@@ -1756,9 +1941,9 @@ int SelectDifficultyF()
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
 	SelectDifficulty.render(WindowPort);
 	SDL_Event e;
-	while(!quit)
+	while (!quit)
 	{
-		while(SDL_PollEvent(&e)!=0)
+		while (SDL_PollEvent(&e) != 0)
 		{
 			if (e.type == SDL_QUIT)
 			{
@@ -1771,11 +1956,24 @@ int SelectDifficultyF()
 					quit = 1;
 			}
 		}
-		if (option == 4)
-			MainMenu();
-		else
-			return option;
 	}
+	quit = 0;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONUP)
+				quit = 1;
+
+		}
+	}
+
+		return option;
+	
 }
 
 int SelectColor()
@@ -1795,163 +1993,340 @@ int SelectColor()
 			if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
 				option = IsInButton();  
-				if (option == 1 || option == 2 || option == 4 )
+				if (option == 1 || option == 2 || option == 4)
+				{
 					quit = 1;
-					
+				}
 			}
 		}
 	}
+	quit = 0;
+	while(!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONUP)
+				quit = 1;
+				
+		}
+	}
+
+
 	if (option == 1)
 		return 1;
 	if (option == 2)
 		return -1;
 	if (option == 4)
-		MainMenu();
+		return 4;
 	return 0;
 
 }
 
+void Show_BackgroundComputerBlack()
+{
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	BackgroundComputerBlack.render(WindowPort);
+}
+
+void Show_BackgroundComputerWhite()
+{
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	BackgroundComputerWhite.render(WindowPort);
+}
+
+
 void vsComputer()
 {
+	int exittomainmenu = 0;
 	int depth = SelectDifficultyF();
-	int player_color = SelectColor();
-	SDL_RenderClear(gRenderer);
-	Show_Background();
-	Show_Board();
-	Init_Table(Table);
-	Show_Table(Table);
+	int player_color;
 
-	char sir[5];
-	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, minscore, maxscore;
-	bool quit = false;
-	SDL_Event e;
-	while (!quit)
+	if (depth == 4)
+		exittomainmenu = 1;
+	if (exittomainmenu == 0)
 	{
-		if (tomove == player_color)
+		player_color = SelectColor();
+		if (player_color == 4)
+			exittomainmenu = 1;
+	}
+	if (exittomainmenu == 0)
+	{
+		exittomainmenu = 0;
+		SDL_RenderClear(gRenderer);
+		Show_Background();
+		if (player_color == 1)
+			Show_BackgroundComputerBlack();
+		if (player_color == -1)
+			Show_BackgroundComputerWhite();
+		Show_Board();
+		Init_Table(Table);
+		Show_Table(Table);
+
+		char sir[5];
+		int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, minscore, maxscore, movecount = 0, k1, k2, undolastmove = 0;
+		int T[300][10][10];
+		bool quit = false;
+		SDL_Event e;
+		while (!quit)
 		{
-			while (SDL_PollEvent(&e) != 0)
+			if (tomove == player_color)
 			{
-				if (e.type == SDL_QUIT)
+				while (SDL_PollEvent(&e) != 0)
 				{
-					quit = true;
-				}
-				if (e.type == SDL_MOUSEBUTTONDOWN)
-				{
-					sq1 = -1;
-					sq2 = -1;
-					int x, y;
-					SDL_GetMouseState(&x, &y);
-					int inside;
-					if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
-						inside = 1;
-					else inside = 0;
-					if (inside)
-						for (i = 0; i < 64; i++)
-							if (x >= SQPort[i].x&&x <= SQPort[i].x + SQPort[i].w&&y >= SQPort[i].y&&y <= SQPort[i].y + SQPort[i].h)
-							{
-								sq1 = i;
-								if (Table[sq1 / 8][sq1 % 8] != -1)
+					if (e.type == SDL_QUIT)
+					{
+						quit = true;
+					}
+					if (e.type == SDL_MOUSEBUTTONDOWN)
+					{
+						sq1 = -1;
+						sq2 = -1;
+						int x, y;
+						SDL_GetMouseState(&x, &y);
+						int inside;
+						if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+							inside = 1;
+						else inside = 0;
+						if (inside)
+							for (i = 0; i < 64; i++)
+								if (x >= SQPort[i].x&&x <= SQPort[i].x + SQPort[i].w&&y >= SQPort[i].y&&y <= SQPort[i].y + SQPort[i].h)
 								{
-									piece = Table[sq1 / 8][sq1 % 8];
-
-									Show_Table(Table);
-
-									SDL_PollEvent(&e);
-									while (e.type != SDL_MOUSEBUTTONUP)
+									sq1 = i;
+									if (Table[sq1 / 8][sq1 % 8] != -1)
 									{
-										SDL_PollEvent(&e);
-									}
-									SDL_GetMouseState(&x, &y);
-									if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
-										inside = 1;
-									else inside = 0;
-									if (inside)
-										for (j = 0; j < 64; j++)
-										{
-											if (x >= SQPort[j].x&&x <= SQPort[j].x + SQPort[j].w&&y >= SQPort[j].y&&y <= SQPort[j].y + SQPort[j].h)
-											{
-												sq2 = j;
+										piece = Table[sq1 / 8][sq1 % 8];
 
-												Table[sq1 / 8][sq1 % 8] = piece;
-												if (tomove == 1)
-													if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
+										Show_Table(Table);
+
+										SDL_PollEvent(&e);
+										while (e.type != SDL_MOUSEBUTTONUP)
+										{
+											SDL_PollEvent(&e);
+										}
+										SDL_GetMouseState(&x, &y);
+										if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+											inside = 1;
+										else inside = 0;
+										if (inside)
+											for (j = 0; j < 64; j++)
+											{
+												if (x >= SQPort[j].x&&x <= SQPort[j].x + SQPort[j].w&&y >= SQPort[j].y&&y <= SQPort[j].y + SQPort[j].h)
+												{
+
+													sq2 = j;
+													if (sq2 != sq1)
 													{
 														Table[sq1 / 8][sq1 % 8] = piece;
-														move(Table, sq1, sq2);
-														Show_Table(Table);
-														tomove = 0 - tomove;
+														if (tomove == 1)
+															if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
+															{
+																Table[sq1 / 8][sq1 % 8] = piece;
+																for (k1 = 0; k1 < 64; k1++)
+																	for (k2 = 0; k2 < 64; k2++)
+																		T[movecount][k1][k2] = Table[k1][k2];
+																movecount++;
+																undolastmove = 0;
+																makemove(Table, sq1, sq2);
+																Show_Table(Table);
+																tomove = 0 - tomove;
+															}
+															else;
+
+														else
+															if (tomove == -1)
+																if (IsLegalMove(Table, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+																{
+																	Table[sq1 / 8][sq1 % 8] = piece;
+																	for (k1 = 0; k1 < 64; k1++)
+																		for (k2 = 0; k2 < 64; k2++)
+																			T[movecount][k1][k2] = Table[k1][k2];
+																	movecount++;
+																	undolastmove = 0;
+
+																	makemove(Table, sq1, sq2);
+																	Show_Table(Table);
+																	tomove = 0 - tomove;
+																}
+																else;
 													}
-													else;
-
-												else
-													if (tomove == 0)
-														if (IsLegalMove(Table, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+													else
+													{
+														SDL_PollEvent(&e);
+														while (e.type != SDL_MOUSEBUTTONUP)
 														{
-															Table[sq1 / 8][sq1 % 8] = piece;
-															move(Table, sq1, sq2);
-															Show_Table(Table);
-															tomove = 0 - tomove;
+															SDL_PollEvent(&e);
 														}
-														else;
+														SDL_GetMouseState(&x, &y);
+														if (x >= SQPort[0].x&&x <= SQPort[63].x + SQPort[63].w&&y >= SQPort[0].y&&y <= SQPort[63].y + SQPort[63].h)
+															inside = 1;
+														else inside = 0;
+														if (inside)
+														{
+															for (int k = 0; k < 64; k++)
+																if (x >= SQPort[k].x&&x <= SQPort[k].x + SQPort[k].w&&y >= SQPort[k].y&&y <= SQPort[k].y + SQPort[k].h)
+																{
+
+																	sq2 = k;
+																	if (sq2 != sq1)
+																	{
+																		Table[sq1 / 8][sq1 % 8] = piece;
+																		if (tomove == 1)
+																			if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
+																			{
+																				Table[sq1 / 8][sq1 % 8] = piece;
+																				for (k1 = 0; k1 < 64; k1++)
+																					for (k2 = 0; k2 < 64; k2++)
+																						T[movecount][k1][k2] = Table[k1][k2];
+																				movecount++;
+																				undolastmove = 0;
+
+																				makemove(Table, sq1, sq2);
+																				Show_Table(Table);
+																				tomove = 0 - tomove;
+																			}
+																			else;
+
+																		else
+																			if (tomove == -1)
+																				if (IsLegalMove(Table, sq1, sq2) && (piece >= pionnegru&&piece <= regenegru))
+																				{
+																					Table[sq1 / 8][sq1 % 8] = piece;
+																					for (k1 = 0; k1 < 64; k1++)
+																						for (k2 = 0; k2 < 64; k2++)
+																							T[movecount][k1][k2] = Table[k1][k2];
+																					movecount++;
+																					undolastmove = 0;
+
+																					makemove(Table, sq1, sq2);
+																					Show_Table(Table);
+																					tomove = 0 - tomove;
+																				}
+																				else;
+																	}
+																}
+														}
+														else
+														{
+															if (x >= BackButton.x && x <= BackButton.x + BackButton.w && y >= BackButton.y && y <= BackButton.y + BackButton.h)
+															{
+																quit = 1;
+																exittomainmenu = 1;
+																quit = 1;
+																break;
+															}
+
+															if (x >= UndoButton.x && x <= UndoButton.x + UndoButton.w && y >= UndoButton.y && y <= UndoButton.y + UndoButton.h)
+															{
+																movecount--;
+																movecount--;
+
+																if (movecount < 0)
+																	movecount = 0;
+																else
+																	if (undolastmove == 0)
+																	{
+																		undolastmove = 1;
+
+																		for (k1 = 0; k1 < 64; k1++)
+																			for (k2 = 0; k2 < 64; k2++)
+																				Table[k1][k2] = T[movecount][k1][k2];
+																	}
 
 
-														//
+																Show_Table(Table);
+															}
+														}
+													}
+												}
 											}
-										}
+									}
 								}
-							}
-							else;
-					else
-					{
-						
-						if (x >= 72 && x <= 72 + 140 && y >= 660 && y <= 660 + 50)
+								else;
+						else
 						{
-							quit = 1;
-							MainMenu();
-							quit = 1;
+
+							if (x >= BackButton.x && x <= BackButton.x + BackButton.w && y >= BackButton.y && y <= BackButton.y + BackButton.h)
+							{
+								quit = 1;
+								exittomainmenu = 1;
+
+								quit = 1;
+								break;
+							}
+
+							if (x >= UndoButton.x && x <= UndoButton.x + UndoButton.w && y >= UndoButton.y && y <= UndoButton.y + UndoButton.h)
+							{
+								movecount--;
+								movecount--;
+
+								if (movecount < 0)
+								{
+									movecount = 0;
+									tomove = 1;
+								}
+								else
+									if (undolastmove == 0)
+
+									{
+										undolastmove = 1;
+										for (k1 = 0; k1 < 64; k1++)
+											for (k2 = 0; k2 < 64; k2++)
+												Table[k1][k2] = T[movecount][k1][k2];
+									}
+
+
+								Show_Table(Table);
+							}
 						}
+
+
 					}
 
+				}
+				if (ismate(Table, tomove))
+				{
+					quit = 1;
+					if (tomove == 1)
+						Show_Black_Win();
+					if (tomove == -1)
+						Show_White_Win();
+					SDL_Delay(3000);
+
+
+					MainMenu();
 
 				}
 
 			}
-			if (ismate(Table, tomove))
+			if (tomove == 0 - player_color)
 			{
-				quit = 1;
-				if (tomove == 1)
-					Show_Black_Win();
-				if (tomove == -1)
-					Show_White_Win();
-				SDL_Delay(3000);
+				//make computer move
+
+				MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, depth);
+				makemove(Table, sq1, sq2);
+				movecount++;
+				Show_Table(Table);
+				tomove = 0 - tomove;
+				if (ismate(Table, tomove))
+				{
+					quit = 1;
+					if (tomove == 1)
+						Show_Black_Win();
+					if (tomove == -1)
+						Show_White_Win();
+					SDL_Delay(5000);
+					exittomainmenu = 1;
 
 
-				MainMenu();
-
-			}
-
-		}
-		else
-		{
-			//make computer move
-
-			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 2);
-			move(Table, sq1, sq2);
-			Show_Table(Table);
-			tomove = 0 - tomove;
-			if (ismate(Table, tomove))
-			{
-				quit = 1;
-				if (tomove == -1)
-					Show_Black_Win();
-				if (tomove == 1)
-					Show_White_Win();
-				SDL_Delay(5000);
-				MainMenu();
-
+				}
 			}
 		}
 	}
+		MainMenu();
 }
 
 
@@ -1987,13 +2362,28 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 										T2[i2][j2] = T[i2][j2];
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-								cscore = Eval(T2);
 
-								if (cscore < cminscore)
+								if(ismate(T2, 1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cminscore = cscore;
+									cscore = -200000;
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
 								}
 							}
 						vc = j + 1;
@@ -2005,14 +2395,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 										T2[i2][j2] = T[i2][j2];
 
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-
-								cscore = Eval(T2);
-
-								if (cscore < cminscore)
+								if (ismate(T2, 1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cminscore = cscore;
+									cscore = -200000;
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
 								}
 							}
 						vl = i + 1;
@@ -2025,14 +2428,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 										T2[i2][j2] = T[i2][j2];
 
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-
-								cscore = Eval(T2);
-
-								if (cscore < cminscore)
+								if (ismate(T2, 1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cminscore = cscore;
+									cscore = -200000;
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
 								}
 							}
 						vl = i + 2;
@@ -2043,14 +2459,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 									for (j2 = 0; j2 < 8; j2++)
 										T2[i2][j2] = T[i2][j2];
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-
-								cscore = Eval(T2);
-
-								if (cscore < cminscore)
+								if (ismate(T2, 1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cminscore = cscore;
+									cscore = -200000;
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
 								}
 							}
 					}
@@ -2070,15 +2499,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 											T2[i2][j2] = T[i2][j2];
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-
-									cscore = Eval(T2);
-
-									if (cscore < cminscore)
-
+									if (ismate(T2, 1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cminscore = cscore;
+										cscore = -200000;
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
 									}
 								}
 						}
@@ -2099,14 +2540,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 											T2[i2][j2] = T[i2][j2];
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-
-									cscore = Eval(T2);
-
-									if (cscore < cminscore)
+									if (ismate(T2, 1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cminscore = cscore;
+										cscore = -200000;
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
 									}
 								}
 								vl += dl[dir];
@@ -2130,14 +2584,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 											T2[i2][j2] = T[i2][j2];
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
-
-									cscore = Eval(T2);
-
-									if (cscore < cminscore)
+									if (ismate(T2, 1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cminscore = cscore;
+										cscore = -200000;
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
 									}
 								}
 								vl += dl[dir];
@@ -2162,13 +2629,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-									cscore = Eval(T2);
-
-									if (cscore < cminscore)
+									if (ismate(T2, 1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cminscore = cscore;
+										cscore = -200000;
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore < cminscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cminscore = cscore;
+										}
 									}
 								}
 								vl += dl[dir];
@@ -2191,7 +2672,19 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 											T2[i2][j2] = T[i2][j2];
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
+									if(ismate(T2, 1))
+								{
+									cscore = -200000;
 
+									if (cscore < cminscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cminscore = cscore;
+									}
+								}
+								else
+								{
 									cscore = Eval(T2);
 
 									if (cscore < cminscore)
@@ -2200,6 +2693,7 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 										best_move_sq2 = vl * 8 + vc % 8;
 										cminscore = cscore;
 									}
+								}
 								}
 							}
 						}
@@ -2225,13 +2719,32 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-								cscore = Eval(T2);
-								if (cscore > cmaxscore)
+								if (ismate(T2, -1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cmaxscore = cscore;
+									cscore = 200000;
+
+									if (cscore > cmaxscore )
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
 								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
+								}
+							
+
+
+
 							}
 						vc = j + 1;
 						if (vl >= 0 && vl < 8 && vc >= 0 && vc < 8)
@@ -2243,12 +2756,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-								cscore = Eval(T2);
-								if (cscore > cmaxscore)
+								if (ismate(T2, -1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cmaxscore = cscore;
+									cscore = 200000;
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
 								}
 							}
 						vl = i - 1;
@@ -2262,12 +2790,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-								cscore = Eval(T2);
-								if (cscore > cmaxscore)
+								if (ismate(T2, -1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cmaxscore = cscore;
+									cscore = 200000;
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
 								}
 							}
 						vl = i - 2;
@@ -2280,12 +2823,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 								move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-								cscore = Eval(T2);
-								if (cscore > cmaxscore)
+								if (ismate(T2, -1))
 								{
-									best_move_sq1 = i * 8 + j % 8;
-									best_move_sq2 = vl * 8 + vc % 8;
-									cmaxscore = cscore;
+									cscore = 200000;
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
+								}
+								else
+								{
+									cscore = Eval(T2);
+
+									if (cscore > cmaxscore)
+									{
+										best_move_sq1 = i * 8 + j % 8;
+										best_move_sq2 = vl * 8 + vc % 8;
+										cmaxscore = cscore;
+									}
 								}
 							}
 					}
@@ -2306,12 +2864,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
+									if (ismate(T2, -1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cmaxscore = cscore;
+										cscore = 200000;
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
 									}
 								}
 						}
@@ -2333,12 +2906,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
+									if (ismate(T2, -1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cmaxscore = cscore;
+										cscore = 200000;
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
 									}
 								}
 								vl += dl[dir];
@@ -2363,12 +2951,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
+									if (ismate(T2, -1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cmaxscore = cscore;
+										cscore = 200000;
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
 									}
 								}
 								vl += dl[dir];
@@ -2393,12 +2996,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
+									if (ismate(T2, -1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cmaxscore = cscore;
+										cscore = 200000;
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
 									}
 								}
 								vl += dl[dir];
@@ -2422,12 +3040,27 @@ void MoveGenerator(int T[10][10], int tomove, int &sq1, int &sq2, int &minscore,
 
 									move(T2, i * 8 + j % 8, vl * 8 + vc % 8);
 
-									cscore = Eval(T2);
-									if (cscore > cmaxscore)
+									if (ismate(T2, -1))
 									{
-										best_move_sq1 = i * 8 + j % 8;
-										best_move_sq2 = vl * 8 + vc % 8;
-										cmaxscore = cscore;
+										cscore = 200000;
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
+									}
+									else
+									{
+										cscore = Eval(T2);
+
+										if (cscore > cmaxscore)
+										{
+											best_move_sq1 = i * 8 + j % 8;
+											best_move_sq2 = vl * 8 + vc % 8;
+											cmaxscore = cscore;
+										}
 									}
 
 								}
@@ -2936,7 +3569,15 @@ int Eval(int T[10][10])
 			sq = l * 8 + c;
 			if (piece != -1)
 			{
-				score += Piece_Value[piece];
+				if (piece == pionalb || piece == pionnegru)
+				{
+					if (piece == pionalb)
+						score += Piece_Value[piece] * Line_Value_White[l];
+					if (piece == pionnegru)
+						score += Piece_Value[piece] * Line_Value_Black[l];
+				}
+				else
+					score += Piece_Value[piece];
 			}
 			score += IsAttackedByBlack(T, sq)*SQ_Value_Black[sq];
 			score += IsAttackedByWhite(T, sq)*SQ_Value_White[sq];
@@ -2944,17 +3585,11 @@ int Eval(int T[10][10])
 	return score;
 }
 
-void DemoMode()
+int ChooseDifficultyComputer1()
 {
-	SDL_RenderClear(gRenderer);
-	Show_Background();
-	Show_Board();
-	Init_Table(Table);
-	Show_Table(Table);
-
-	char sir[5];
-	int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, depth = 2, minscore, maxscore;
-	bool quit = false;
+	int option = -1, quit = 0;
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	SelectDifficultyComputer1.render(WindowPort);
 	SDL_Event e;
 	while (!quit)
 	{
@@ -2964,26 +3599,147 @@ void DemoMode()
 			{
 				quit = true;
 			}
+			if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				option = IsInButton();
+				if (option > 0)
+					quit = 1;
+			}
 		}
-			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, 2);
-			cout << sq1 << " to " << sq2 << "\n";
+	}
+	quit = 0;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONUP)
+				quit = 1;
+
+		}
+	}
+	return option;
+}
+
+int ChooseDifficultyComputer2()
+{
+	int option = -1, quit = 0;
+	SDL_RenderSetViewport(gRenderer, &WindowPort);
+	SelectDifficultyComputer2.render(WindowPort);
+	SDL_Event e;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				option = IsInButton();
+				if (option > 0)
+					quit = 1;
+			}
+		}
+	}
+	quit = 0;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONUP)
+				quit = 1;
+
+		}
+	}
+	return option;
+}
+
+void DemoMode()
+{
+
+	int depth1 = ChooseDifficultyComputer1();
+	int depth2 = ChooseDifficultyComputer2();
+	if (depth1 != 4 && depth2 != 4)
+	{
+		SDL_RenderClear(gRenderer);
+		Show_Background();
+		Show_Board();
+		Init_Table(Table);
+		Show_Table(Table);
+
+		char sir[5];
+		int i, j, sq1 = -1, sq2 = -1, l1, c1, l2, c2, tomove = 1, piece, depth = 2, minscore, maxscore;
+		bool quit = false;
+		SDL_Event e;
+		while (!quit)
+		{
+			while (SDL_PollEvent(&e) != 0)
+			{
+				if (e.type == SDL_QUIT)
+				{
+					quit = true;
+				}
+				if (e.type == SDL_MOUSEBUTTONUP)
+				{
+					int x, y;
+					SDL_GetMouseState(&x, &y);
+					if (x >= BackButton.x&&x <= BackButton.x + BackButton.w&&y >= BackButton.y&&y <= BackButton.y + BackButton.h)
+						quit = 1;
+				}
+			}
+			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, depth1);
 			move(Table, sq1, sq2);
 			Show_Table(Table);
 			tomove = 0 - tomove;
 			if (ismate(Table, tomove))
 			{
 				quit = 1;
-				cout << 0 - tomove << " wins\n";
-				if (tomove == -1)
-					Show_Black_Win();
 				if (tomove == 1)
+					Show_Black_Win();
+				if (tomove == -1)
 					Show_White_Win();
 				SDL_Delay(5000);
-				MainMenu();
-
 			}
-			
+
+			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, depth2);
+			move(Table, sq1, sq2);
+			Show_Table(Table);
+			tomove = 0 - tomove;
+			if (ismate(Table, tomove))
+			{
+				quit = 1;
+				if (tomove == 1)
+					Show_Black_Win();
+				if (tomove == -1)
+					Show_White_Win();
+				SDL_Delay(5000);
+			}
+			while (SDL_PollEvent(&e) != 0)
+			{
+				if (e.type == SDL_QUIT)
+				{
+					quit = true;
+				}
+				if (e.type == SDL_MOUSEBUTTONUP)
+				{
+					int x, y;
+					SDL_GetMouseState(&x, &y);
+					if (x >= BackButton.x&&x <= BackButton.x + BackButton.w&&y >= BackButton.y&&y <= BackButton.y + BackButton.h)
+						quit = 1;
+				}
+			}
+		}
 	}
+	MainMenu();
 }
 
 void MainMenu()
@@ -3013,13 +3769,26 @@ void MainMenu()
 			}
 		}
 	}
+	quit = 0;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+			}
+			if (e.type == SDL_MOUSEBUTTONUP)
+				quit = 1;
+
+		}
+	}
 	if (option == 1)
 		vsPlayer();
 	if (option == 2)
 		vsComputer();
 	if (option == 3)
 		DemoMode();
-	
 }
 
 int main(int argc, char* args[])
