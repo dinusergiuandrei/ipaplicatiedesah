@@ -1,42 +1,39 @@
 ﻿  Aplicatie de sah.cpp
-Aplicatie de sah.cpp(317): warning C4101: 'c': unreferenced local variable
-Aplicatie de sah.cpp(317): warning C4101: 'l': unreferenced local variable
-Aplicatie de sah.cpp(740): warning C4800: 'int': forcing value to bool 'true' or 'false' (performance warning)
-Aplicatie de sah.cpp(440): warning C4101: 'aux': unreferenced local variable
-Aplicatie de sah.cpp(1003): warning C4101: 'dir': unreferenced local variable
-Aplicatie de sah.cpp(1003): warning C4101: 'vc': unreferenced local variable
-Aplicatie de sah.cpp(1003): warning C4101: 'piece': unreferenced local variable
-Aplicatie de sah.cpp(1003): warning C4101: 'vl': unreferenced local variable
-Aplicatie de sah.cpp(1003): warning C4101: 'col': unreferenced local variable
-Aplicatie de sah.cpp(1071): warning C4101: 'cscore': unreferenced local variable
-Aplicatie de sah.cpp(1072): warning C4101: 'cmaxscore2': unreferenced local variable
-Aplicatie de sah.cpp(1072): warning C4101: 'csq2': unreferenced local variable
-Aplicatie de sah.cpp(1070): warning C4101: 'best_move_sq1': unreferenced local variable
-Aplicatie de sah.cpp(1072): warning C4101: 'csq1': unreferenced local variable
-Aplicatie de sah.cpp(1070): warning C4101: 'best_move_sq2': unreferenced local variable
-Aplicatie de sah.cpp(1072): warning C4101: 'cminscore2': unreferenced local variable
-Aplicatie de sah.cpp(1461): warning C4101: 'i': unreferenced local variable
-Aplicatie de sah.cpp(1473): warning C4101: 'i': unreferenced local variable
-Aplicatie de sah.cpp(1485): warning C4101: 'i': unreferenced local variable
-Aplicatie de sah.cpp(1497): warning C4101: 'i': unreferenced local variable
-Aplicatie de sah.cpp(1524): warning C4101: 'c1': unreferenced local variable
-Aplicatie de sah.cpp(1524): warning C4101: 'l1': unreferenced local variable
-Aplicatie de sah.cpp(1524): warning C4101: 'l2': unreferenced local variable
-Aplicatie de sah.cpp(1524): warning C4101: 'c2': unreferenced local variable
-Aplicatie de sah.cpp(1692): warning C4101: 'c1': unreferenced local variable
-Aplicatie de sah.cpp(1692): warning C4101: 'l1': unreferenced local variable
-Aplicatie de sah.cpp(1692): warning C4101: 'l2': unreferenced local variable
-Aplicatie de sah.cpp(1691): warning C4101: 'sir': unreferenced local variable
-Aplicatie de sah.cpp(1692): warning C4101: 'c2': unreferenced local variable
-Aplicatie de sah.cpp(2836): warning C4101: 'c1': unreferenced local variable
-Aplicatie de sah.cpp(2836): warning C4101: 'l1': unreferenced local variable
-Aplicatie de sah.cpp(2836): warning C4101: 'l2': unreferenced local variable
-Aplicatie de sah.cpp(2835): warning C4101: 'sir': unreferenced local variable
-Aplicatie de sah.cpp(2836): warning C4101: 'c2': unreferenced local variable
+Aplicatie de sah.cpp(366): warning C4101: 'c': unreferenced local variable
+Aplicatie de sah.cpp(366): warning C4101: 'l': unreferenced local variable
+Aplicatie de sah.cpp(840): warning C4800: 'int': forcing value to bool 'true' or 'false' (performance warning)
+Aplicatie de sah.cpp(538): warning C4101: 'aux': unreferenced local variable
+Aplicatie de sah.cpp(1103): warning C4101: 'dir': unreferenced local variable
+Aplicatie de sah.cpp(1103): warning C4101: 'vc': unreferenced local variable
+Aplicatie de sah.cpp(1103): warning C4101: 'piece': unreferenced local variable
+Aplicatie de sah.cpp(1103): warning C4101: 'vl': unreferenced local variable
+Aplicatie de sah.cpp(1103): warning C4101: 'col': unreferenced local variable
+Aplicatie de sah.cpp(1171): warning C4101: 'cscore': unreferenced local variable
+Aplicatie de sah.cpp(1172): warning C4101: 'cmaxscore2': unreferenced local variable
+Aplicatie de sah.cpp(1172): warning C4101: 'csq2': unreferenced local variable
+Aplicatie de sah.cpp(1170): warning C4101: 'best_move_sq1': unreferenced local variable
+Aplicatie de sah.cpp(1172): warning C4101: 'csq1': unreferenced local variable
+Aplicatie de sah.cpp(1170): warning C4101: 'best_move_sq2': unreferenced local variable
+Aplicatie de sah.cpp(1172): warning C4101: 'cminscore2': unreferenced local variable
+Aplicatie de sah.cpp(1580): warning C4101: 'c1': unreferenced local variable
+Aplicatie de sah.cpp(1580): warning C4101: 'l1': unreferenced local variable
+Aplicatie de sah.cpp(1580): warning C4101: 'l2': unreferenced local variable
+Aplicatie de sah.cpp(1580): warning C4101: 'c2': unreferenced local variable
+Aplicatie de sah.cpp(2099): warning C4101: 'c1': unreferenced local variable
+Aplicatie de sah.cpp(2099): warning C4101: 'l1': unreferenced local variable
+Aplicatie de sah.cpp(2099): warning C4101: 'l2': unreferenced local variable
+Aplicatie de sah.cpp(2098): warning C4101: 'sir': unreferenced local variable
+Aplicatie de sah.cpp(2099): warning C4101: 'c2': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'c1': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'l1': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'l2': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'piece': unreferenced local variable
+Aplicatie de sah.cpp(3708): warning C4101: 'sir': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'j': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'i': unreferenced local variable
+Aplicatie de sah.cpp(3709): warning C4101: 'c2': unreferenced local variable
   Generating code
-  0 of 139 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    7 functions had inline decision re-evaluated but remain unchanged
+  All 160 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
-  Aplicatie de sah.vcxproj -> G:\Tema facultate\Aplicatie de sah\x64\Release\Aplicatie de sah.exe
-  Aplicatie de sah.vcxproj -> G:\Tema facultate\Aplicatie de sah\x64\Release\Aplicatie de sah.pdb (Full PDB)
+  Aplicatie de sah.vcxproj -> G:\Tema facultate\Aplicatie de sah\Aplicatie de sah\x64\Release\Aplicatie de sah.exe
+  Aplicatie de sah.vcxproj -> G:\Tema facultate\Aplicatie de sah\Aplicatie de sah\x64\Release\Aplicatie de sah.pdb (Full PDB)

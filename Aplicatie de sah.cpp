@@ -336,6 +336,23 @@ void Show_Black_Win()
 	Negrulacastigat_Image.render(CurrentPort);
 }
 
+void Show_Black_To_Move()
+{
+	SDL_Rect current_rect;
+	current_rect.x = SQPort[63].x + 300;
+	current_rect.y = SQPort[63].y + SQPort[63].h / 2;
+	current_rect.h = 20;
+	current_rect.w = 50;
+	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+	SDL_RenderFillRect(gRenderer, &current_rect);
+	SDL_RenderPresent(gRenderer);
+}
+
+void Show_White_To_Move()
+{
+	
+}
+
 void Show_Piece(int piece, int SQ)
 {
 	SDL_Rect port;
@@ -1539,6 +1556,14 @@ void Set_SQ_Value_Black()
 		}
 }
 
+void HighlightSQ(int sq)
+{
+	SDL_Rect port = SQPort[sq];
+	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+	SDL_RenderDrawRect(gRenderer, &port);
+	SDL_RenderPresent(gRenderer);
+}
+
 void vsPlayer()
 {
 	SDL_RenderClear(gRenderer);
@@ -1567,7 +1592,7 @@ void vsPlayer()
 			{
 				quit = true;
 			}
-			
+
 			if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
 				sq1 = -1;
@@ -1583,6 +1608,7 @@ void vsPlayer()
 						if (x >= SQPort[i].x&&x < SQPort[i].x + SQPort[i].w&&y > SQPort[i].y&&y < SQPort[i].y + SQPort[i].h)
 						{
 							sq1 = i;
+
 							if (CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8] != -1)
 							{
 								piece = CurrentPosition->CurrentTable[sq1 / 8][sq1 % 8];
@@ -1631,7 +1657,9 @@ void vsPlayer()
 														makemove(AuxPosition->CurrentTable, sq1, sq2);
 														CurrentPosition = AuxPosition;
 
+														
 														Show_Table(CurrentPosition->CurrentTable);
+														
 														tomove = 0 - tomove;
 													}
 													else;
@@ -1667,6 +1695,7 @@ void vsPlayer()
 											}
 											else
 											{
+
 												SDL_PollEvent(&e);
 												while (e.type != SDL_MOUSEBUTTONDOWN)
 												{
@@ -3805,7 +3834,6 @@ int main(int argc, char* args[])
 	SDL_RenderSetViewport(gRenderer, &WindowPort);
 	
 	MainMenu();
-
 	
 	close();
 
