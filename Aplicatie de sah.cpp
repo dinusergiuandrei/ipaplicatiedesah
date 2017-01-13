@@ -2185,7 +2185,7 @@ void vsComputer()
 													else
 													{
 														SDL_PollEvent(&e);
-														while (e.type != SDL_MOUSEBUTTONUP)
+														while (e.type != SDL_MOUSEBUTTONDOWN)
 														{
 															SDL_PollEvent(&e);
 														}
@@ -3601,9 +3601,9 @@ int Eval(int T[10][10])
 				if (piece == pionalb || piece == pionnegru)
 				{
 					if (piece == pionalb)
-						score += Piece_Value[piece] * Line_Value_White[l];
+						score += Piece_Value[piece]*Line_Value_White[l];
 					if (piece == pionnegru)
-						score += Piece_Value[piece] * Line_Value_Black[l];
+						score += (-1)*Piece_Value[piece]*Line_Value_Black[l];
 				}
 				else
 					score += Piece_Value[piece];
@@ -3727,6 +3727,8 @@ void DemoMode()
 			}
 			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, depth1);
 			move(Table, sq1, sq2);
+			if (depth1 == 1 || depth1 == 2)
+				SDL_Delay(500);
 			Show_Table(Table);
 			tomove = 0 - tomove;
 			if (ismate(Table, tomove))
@@ -3741,6 +3743,8 @@ void DemoMode()
 
 			MoveGenerator(Table, tomove, sq1, sq2, minscore, maxscore, depth2);
 			move(Table, sq1, sq2);
+			if (depth2 == 1 || depth2 == 2)
+				SDL_Delay(500);
 			Show_Table(Table);
 			tomove = 0 - tomove;
 			if (ismate(Table, tomove))
