@@ -2131,7 +2131,7 @@ void vsComputer()
 
 										Show_Table(Table);
 
-										SDL_PollEvent(&e);
+										SDL_PollEvent(&e);            
 										while (e.type != SDL_MOUSEBUTTONUP)
 										{
 											SDL_PollEvent(&e);
@@ -2184,7 +2184,7 @@ void vsComputer()
 													}
 													else
 													{
-														SDL_PollEvent(&e);
+														SDL_PollEvent(&e);       
 														while (e.type != SDL_MOUSEBUTTONDOWN)
 														{
 															SDL_PollEvent(&e);
