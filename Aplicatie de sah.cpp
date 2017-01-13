@@ -2149,7 +2149,7 @@ void vsComputer()
 													sq2 = j;
 													if (sq2 != sq1)
 													{
-														Table[sq1 / 8][sq1 % 8] = piece;
+														
 														if (tomove == 1)
 															if (piece >= pionalb&&piece <= regealb && IsLegalMove(Table, sq1, sq2))
 															{
