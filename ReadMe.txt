@@ -16,15 +16,20 @@ ipaplicatiedesah-master\x64\Release\Aplicatie de sah.exe
 		
 		In this mode the user is able to select color of play and Computer Strenght, which varies from
 		
-		-"Beginner" ( For Players with less experience, learning how pieces move across the board ), 
+		-"Beginner" ( For Players with less experience, 
+		learning how pieces move across the board ), 
 		
-		-"Intermediate" ( For more experienced players. The Computer makes much better moves, avoids
-		 losing pieces and has little understanding of piece activity, posing problems for the player )
+		-"Intermediate" ( For more experienced players. 
+		The Computer makes much better moves, avoids
+		losing pieces and has little understanding of 
+		piece activity, posing problems for the player )
 		 
-		-"Advanced" ( For players used to competitive chess competitions. The computer has deep understanding
-		of the position, making moves that are tactical and strategical correct. In this mode the computer
-		enters the "Deep Calculation Mode", taking on avarage 30 to 40 seconds per move, faster than a 
-		human's calculation in competitive chess )
+		-"Advanced" ( For players used to competitive chess competitions. 
+		The computer has deep understanding	of the position, 
+		making moves that are tactical and strategical correct. 
+		In this mode the computer enters the "Deep Calculation Mode", 
+		taking on avarage 30 to 40 seconds per move, which is still faster than a 
+		human's calculation speed in competitive chess )
 
 		This mode is useful for Training, checking play level or just for fun.		
 
@@ -53,8 +58,8 @@ ipaplicatiedesah-master\x64\Release\Aplicatie de sah.exe
 		https://www.youtube.com/watch?v=0rvG_hYP7lg
 
 
-	If .dll files are missing from you computer (most probably  MSVCP140.dll, VCRUNTIME140.dll, ... ) you can
-	download them from https://www.microsoft.com/en-us/download/details.aspx?id=48145
+	If .dll files are missing from you computer (most probably  MSVCP140.dll, VCRUNTIME140.dll, ... )
+	you can download them from https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
 
 	
