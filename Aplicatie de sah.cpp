@@ -1963,7 +1963,6 @@ int IsInButton()
 	return 0;
 }
 
-
 int SelectDifficultyF()
 {
 	int option=-1, quit=0;
